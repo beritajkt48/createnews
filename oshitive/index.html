@@ -176,16 +176,22 @@
 
             <!-- FITUR POTONG / TRIM VIDEO (GAYA TIMELINE VISUAL SEPERTI REFERENSI) -->
             <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex flex-col gap-2.5">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
                   <i class="ph-bold ph-scissors text-[#4262b2]"></i> Timeline Potong Video
                 </span>
-                <div class="flex items-center gap-2">
-                  <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 flex items-center gap-1">
-                    <i class="ph-bold ph-gauge"></i> Kecepatan: <span id="speedDisplayLabel">1.02x</span>
+                
+                <!-- PILIHAN KECEPATAN: 1.00x, 1.01x, 1.02x -->
+                <div class="flex items-center gap-1 bg-slate-900 border border-slate-700/80 p-0.5 rounded-lg">
+                  <span class="text-[10px] text-slate-400 font-semibold px-1.5 flex items-center gap-1">
+                    <i class="ph-bold ph-gauge text-teal-400"></i> Speed:
                   </span>
-                  <button id="btnResetTrim" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">Reset Penuh</button>
+                  <button type="button" data-speed="1.00" class="btn-speed-select text-[10px] font-bold px-2 py-0.5 rounded text-slate-400 hover:text-white transition-all cursor-pointer">1.00x</button>
+                  <button type="button" data-speed="1.01" class="btn-speed-select text-[10px] font-bold px-2 py-0.5 rounded text-slate-400 hover:text-white transition-all cursor-pointer">1.01x</button>
+                  <button type="button" data-speed="1.02" class="btn-speed-select active text-[10px] font-bold px-2 py-0.5 rounded bg-teal-600 text-white shadow-sm transition-all cursor-pointer">1.02x</button>
                 </div>
+
+                <button id="btnResetTrim" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">Reset Penuh</button>
               </div>
 
               <!-- TIMELINE VISUAL CLIP STRIP CONTAINER -->
@@ -279,11 +285,17 @@
                 </button>
               </div>
 
-              <!-- Auto-Fade at 5s Setting -->
-              <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 text-[11px]">
-                <input type="checkbox" id="toggleAutoFade" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
-                <span class="font-medium text-slate-300">Hilang pada detik ke-<span class="text-blue-400 font-bold">5</span></span>
-              </label>
+              <!-- Animasi Fade In & Fade Out Toggles -->
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1 cursor-pointer text-slate-300 text-[11px]" title="Animasi memudar masuk di awal video">
+                  <input type="checkbox" id="toggleFadeIn" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                  <span class="font-medium text-slate-300">Fade In</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer text-slate-300 text-[11px]" title="Animasi memudar keluar saat detik ke-5">
+                  <input type="checkbox" id="toggleAutoFade" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                  <span class="font-medium text-slate-300">Fade Out (5s)</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -581,6 +593,7 @@
     const playIcon = document.getElementById('playIcon');
     const btnMuteVideo = document.getElementById('btnMuteVideo');
     const muteIcon = document.getElementById('muteIcon');
+    const toggleFadeIn = document.getElementById('toggleFadeIn');
     const toggleAutoFade = document.getElementById('toggleAutoFade');
     const fadingCaptionSection = document.getElementById('fadingCaptionSection');
     const newsOverlayGroup = document.getElementById('newsOverlayGroup');
@@ -604,10 +617,36 @@
     const timelinePlayhead = document.getElementById('timelinePlayhead');
     const clipSpeedBadge = document.getElementById('clipSpeedBadge');
     const speedDisplayLabel = document.getElementById('speedDisplayLabel');
+    const speedButtons = document.querySelectorAll('.btn-speed-select');
 
     let isDraggingTrimLeft = false;
     let isDraggingTrimRight = false;
-    let currentVideoSpeed = 1.02; // Otomatis naik ke 1.02x saat upload
+    let currentVideoSpeed = 1.02; // Default 1.02x saat upload
+
+    function setVideoSpeed(speed) {
+      currentVideoSpeed = parseFloat(speed);
+      if (bgPreviewVideo) {
+        bgPreviewVideo.playbackRate = currentVideoSpeed;
+        bgPreviewVideo.defaultPlaybackRate = currentVideoSpeed;
+      }
+      if (clipSpeedBadge) clipSpeedBadge.textContent = `${currentVideoSpeed.toFixed(2)}x`;
+      if (speedDisplayLabel) speedDisplayLabel.textContent = `${currentVideoSpeed.toFixed(2)}x`;
+
+      speedButtons.forEach(btn => {
+        if (parseFloat(btn.dataset.speed) === currentVideoSpeed) {
+          btn.className = "btn-speed-select active text-[10px] font-bold px-2 py-0.5 rounded bg-teal-600 text-white shadow-sm transition-all cursor-pointer";
+        } else {
+          btn.className = "btn-speed-select text-[10px] font-bold px-2 py-0.5 rounded text-slate-400 hover:text-white transition-all cursor-pointer";
+        }
+      });
+    }
+
+    speedButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setVideoSpeed(btn.dataset.speed);
+        showToast(`Kecepatan diubah ke ${btn.dataset.speed}x`);
+      });
+    });
 
     function updateVisualTimeline() {
       const totalDur = bgPreviewVideo.duration || 10;
@@ -933,18 +972,14 @@
       bgPreviewVideo.src = src;
       bgPreviewVideo.load();
 
-      // OTOMATIS NAIKKAN KECEPATAN DARI 1.00x MENJADI 1.02x
-      currentVideoSpeed = 1.02;
-      bgPreviewVideo.playbackRate = currentVideoSpeed;
-      bgPreviewVideo.defaultPlaybackRate = currentVideoSpeed;
-      if (clipSpeedBadge) clipSpeedBadge.textContent = "1.02x";
-      if (speedDisplayLabel) speedDisplayLabel.textContent = "1.02x";
+      // OTOMATIS NAIKKAN KECEPATAN KE 1.02x SAAT UPLOAD
+      setVideoSpeed(1.02);
 
       uploadLabelText.textContent = name ? name.substring(0, 14) + '...' : 'Ganti Video';
       downloadBtnText.textContent = 'Download Video (MP4/WebM)';
 
       bgPreviewVideo.onloadedmetadata = () => {
-        bgPreviewVideo.playbackRate = 1.02;
+        bgPreviewVideo.playbackRate = currentVideoSpeed;
         videoTimeline.max = bgPreviewVideo.duration || 10;
         videoTimeDisplay.textContent = `00:00 / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
         trimStartInput.value = "0";
@@ -964,7 +999,7 @@
       showToast('Video aktif! Kecepatan otomatis dinaikkan ke 1.02x.');
     }
 
-    // Video playback & auto fade engine pada detik ke-5
+    // Video playback & auto fade engine (Fade In & Fade Out)
     bgPreviewVideo.addEventListener('timeupdate', () => {
       const cur = bgPreviewVideo.currentTime;
       const totalDur = bgPreviewVideo.duration || 10;
@@ -984,25 +1019,25 @@
         bgPreviewVideo.currentTime = clipStart;
       }
 
-      if (toggleAutoFade.checked && mediaType === 'video') {
-        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s), footer tetap tinggal
-        if (cur >= 5.0) {
-          if (!isVideoFaded) {
-            fadingCaptionSection.style.opacity = '0';
-            gradientOverlay.style.opacity = '0';
-            solidBottomBg.style.opacity = '0';
-            isVideoFaded = true;
-          }
-        } else {
-          if (isVideoFaded) {
-            fadingCaptionSection.style.opacity = '1';
-            gradientOverlay.style.opacity = '0.9';
-            solidBottomBg.style.opacity = '1';
-            isVideoFaded = false;
-          }
+      if (mediaType === 'video') {
+        const elapsedSinceTrimStart = cur - clipStart;
+        let opacity = 1.0;
+
+        // 1. Animasi FADE IN (0s - 0.6s dari titik awal trim)
+        if (toggleFadeIn.checked && elapsedSinceTrimStart >= 0 && elapsedSinceTrimStart < 0.6) {
+          opacity = Math.min(1.0, elapsedSinceTrimStart / 0.6);
         }
+
+        // 2. Animasi FADE OUT (Mulai detik ke-5 dari titik awal trim)
+        if (toggleAutoFade.checked && elapsedSinceTrimStart >= 5.0) {
+          const fadeOutElapsed = elapsedSinceTrimStart - 5.0;
+          opacity = Math.max(0, 1.0 - (fadeOutElapsed / 0.6));
+        }
+
+        fadingCaptionSection.style.opacity = opacity.toString();
+        gradientOverlay.style.opacity = (opacity * 0.9).toString();
+        solidBottomBg.style.opacity = opacity.toString();
       } else {
-        // Jika auto fade nonaktif, pastikan selalu terlihat
         fadingCaptionSection.style.opacity = '1';
         gradientOverlay.style.opacity = '0.9';
         solidBottomBg.style.opacity = '1';
@@ -1644,8 +1679,8 @@
           const wasMuted = bgPreviewVideo.muted;
           bgPreviewVideo.muted = false;
 
-          // Set kecepatan playback 1.02x saat proses perekaman
-          bgPreviewVideo.playbackRate = 1.02;
+          // Set kecepatan playback sesuai pilihan (1.00x, 1.01x, atau 1.02x) saat proses perekaman
+          bgPreviewVideo.playbackRate = currentVideoSpeed;
 
           // Reset playback video ke awal (0 detik)
           bgPreviewVideo.pause();
@@ -1654,7 +1689,7 @@
 
           recorder.start();
           await bgPreviewVideo.play();
-          bgPreviewVideo.playbackRate = 1.02;
+          bgPreviewVideo.playbackRate = currentVideoSpeed;
 
           // Pengaturan durasi trim potongan video
           const clipStart = Math.max(0, parseFloat(trimStartInput.value) || 0);
@@ -1680,12 +1715,18 @@
               progressSpan.textContent = `Merekam Video (${pct}%)...`;
             }
 
-            // Hitung opacity overlay: pudar halus setelah detik ke-5 dari video
+            // Hitung opacity overlay: Fade In dan Fade Out sesuai toggle
             let overlayOpacity = 1.0;
-            if (toggleAutoFade.checked) {
-              if (curTime >= 5.0) {
-                overlayOpacity = Math.max(0, 1.0 - (curTime - 5.0) * 2.0); // fade out dalam 0.5s
-              }
+
+            // Fade In (0.0s s/d 0.6s)
+            if (toggleFadeIn.checked && elapsed < 0.6) {
+              overlayOpacity = Math.min(1.0, elapsed / 0.6);
+            }
+
+            // Fade Out (mulai detik ke-5.0)
+            if (toggleAutoFade.checked && elapsed >= 5.0) {
+              const fadeOutElapsed = elapsed - 5.0;
+              overlayOpacity = Math.max(0, 1.0 - (fadeOutElapsed / 0.6));
             }
 
             renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
@@ -1697,7 +1738,7 @@
               if (animationFrameId) cancelAnimationFrame(animationFrameId);
               bgPreviewVideo.pause();
               bgPreviewVideo.muted = wasMuted; // Kembalikan status mute awal
-              bgPreviewVideo.playbackRate = 1.02;
+              bgPreviewVideo.playbackRate = currentVideoSpeed;
               setTimeout(() => {
                 if (recorder.state === 'recording') {
                   recorder.stop();
