@@ -381,27 +381,27 @@
 
           <!-- Layer 3: Konten Box Berita & Footer (Bottom-anchored dynamic stack) -->
           <!-- Disertakan ID newsOverlayGroup agar otomatis fade out pada detik ke-5 jika mode video -->
-          <div id="newsOverlayGroup" class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none transition-opacity duration-700">
+          <div id="newsOverlayGroup" class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none">
             
-            <!-- Dynamic Floating Group: Meta Badges + Caption Box (Menempel dan tumbuh ke atas dari footer) -->
-            <div class="w-full flex flex-col justify-end pointer-events-auto">
+            <!-- Dynamic Floating Group: Meta Badges + Caption Box (Menempel dan tumbuh ke atas dari footer, memudar saat detik ke-5) -->
+            <div id="fadingCaptionSection" class="w-full flex flex-col justify-end pointer-events-auto transition-opacity duration-700">
               
               <!-- Meta Badges Row: Tag (Kiri) & Credit / Sumber (Kanan) Sejajar di Puncak Box -->
-              <div id="metaRowContainer" class="w-full mb-2 flex items-center justify-between">
+              <div id="metaRowContainer" class="w-full mb-1.5 flex items-center justify-between">
                 <!-- Tag Badge -->
-                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-lg shadow-md border border-white/80 uppercase">
+                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-md shadow-md border border-white/80 uppercase">
                   JKT48
                 </span>
 
                 <!-- Credit / Sumber Badge (Bisa di-toggle ON/OFF) -->
-                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md flex items-center gap-1.5 uppercase tracking-wide">
+                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-md shadow-md flex items-center gap-1.5 uppercase tracking-wide">
                   <i class="ph-bold ph-camera text-[11px] text-blue-300"></i>
                   <span id="previewCreditText">Sumber: Twitter/X</span>
                 </div>
               </div>
 
-              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) -->
-              <div id="captionCardBox" class="w-full rounded-none border border-slate-900 shadow-2xl overflow-hidden pattern-shards relative p-3.5 sm:p-5 h-auto transition-all duration-200">
+              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) DENGAN PADDING SIMETRIS -->
+              <div id="captionCardBox" class="w-full rounded-none border-2 border-slate-900 shadow-2xl overflow-hidden pattern-shards relative px-4 py-3 sm:px-6 sm:py-4 h-auto transition-all duration-200 flex items-center">
                 
                 <!-- SVG Low-Poly Shard Watermark Background -->
                 <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]" preserveAspectRatio="none" viewBox="0 0 600 240" fill="none">
@@ -414,19 +414,19 @@
                 </svg>
 
                 <!-- Dynamic Headline Text -->
-                <div id="headlineWrapper" class="relative z-10 w-full">
+                <div id="headlineWrapper" class="relative z-10 w-full flex items-center">
                   <h2 id="previewHeadline" 
                       class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
-                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.025em; word-break: break-word;">
-                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR
+                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.02em; word-break: break-word;">
+                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
                   </h2>
                 </div>
               </div>
 
             </div>
 
-            <!-- Footer Branding & Pin Line Sambung (Tetap konsisten di posisi bawah) -->
-            <div class="w-full mt-3.5 sm:mt-4 flex items-center justify-between text-white text-[10px] sm:text-[12px] font-bold">
+            <!-- Footer Branding & Pin Line Sambung (Tetap ada & selalu tampil permanen) -->
+            <div id="permanentFooterBar" class="w-full mt-3.5 sm:mt-4 flex items-center justify-between text-white text-[10px] sm:text-[12px] font-bold">
               
               <!-- Brand Title Kiri -->
               <div id="previewBrand" class="tracking-wider uppercase font-black text-xs sm:text-sm pr-1">
@@ -491,6 +491,7 @@
     const btnMuteVideo = document.getElementById('btnMuteVideo');
     const muteIcon = document.getElementById('muteIcon');
     const toggleAutoFade = document.getElementById('toggleAutoFade');
+    const fadingCaptionSection = document.getElementById('fadingCaptionSection');
     const newsOverlayGroup = document.getElementById('newsOverlayGroup');
     const gradientOverlay = document.getElementById('gradientOverlay');
 
@@ -641,7 +642,7 @@
       bgPreviewImg.src = src;
 
       // Kembalikan visibilitas caption
-      newsOverlayGroup.style.opacity = '1';
+      fadingCaptionSection.style.opacity = '1';
       gradientOverlay.style.opacity = '0.9';
       solidBottomBg.style.opacity = '1';
 
@@ -689,17 +690,17 @@
       videoTimeDisplay.textContent = `${formatSeconds(cur)} / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
 
       if (toggleAutoFade.checked && mediaType === 'video') {
-        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s)
+        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s), footer tetap tinggal
         if (cur >= 5.0) {
           if (!isVideoFaded) {
-            newsOverlayGroup.style.opacity = '0';
+            fadingCaptionSection.style.opacity = '0';
             gradientOverlay.style.opacity = '0';
             solidBottomBg.style.opacity = '0';
             isVideoFaded = true;
           }
         } else {
           if (isVideoFaded) {
-            newsOverlayGroup.style.opacity = '1';
+            fadingCaptionSection.style.opacity = '1';
             gradientOverlay.style.opacity = '0.9';
             solidBottomBg.style.opacity = '1';
             isVideoFaded = false;
@@ -707,7 +708,7 @@
         }
       } else {
         // Jika auto fade nonaktif, pastikan selalu terlihat
-        newsOverlayGroup.style.opacity = '1';
+        fadingCaptionSection.style.opacity = '1';
         gradientOverlay.style.opacity = '0.9';
         solidBottomBg.style.opacity = '1';
       }
@@ -740,7 +741,7 @@
 
     toggleAutoFade.addEventListener('change', () => {
       if (!toggleAutoFade.checked) {
-        newsOverlayGroup.style.opacity = '1';
+        fadingCaptionSection.style.opacity = '1';
         gradientOverlay.style.opacity = '0.9';
         solidBottomBg.style.opacity = '1';
       }
@@ -999,6 +1000,7 @@
       ctx.fillRect(0, 0, targetW, targetH);
 
       // Gambar Media Latar (Foto atau Video)
+      // Gunakan ukuran bounding box asli display agar tampilan persis 1:1 identik
       const currentMedia = mediaType === 'video' ? bgPreviewVideo : bgPreviewImg;
       const mediaW = mediaType === 'video' ? bgPreviewVideo.videoWidth : bgPreviewImg.naturalWidth;
       const mediaH = mediaType === 'video' ? bgPreviewVideo.videoHeight : bgPreviewImg.naturalHeight;
@@ -1006,112 +1008,88 @@
       if (mediaW > 0 && mediaH > 0) {
         ctx.save();
         const mediaAspect = mediaW / mediaH;
-        const canvasAspect = targetW / targetH;
-        let drawW, drawH;
+        const containerAspect = rect.width / rect.height;
+        let baseW, baseH;
 
-        if (mediaAspect > canvasAspect) {
-          drawH = targetH;
-          drawW = targetH * mediaAspect;
+        if (mediaAspect > containerAspect) {
+          baseH = targetH;
+          baseW = targetH * mediaAspect;
         } else {
-          drawW = targetW;
-          drawH = targetW / mediaAspect;
+          baseW = targetW;
+          baseH = targetW / mediaAspect;
         }
 
-        ctx.translate((targetW / 2) + imgState.x * scaleFactor, (targetH / 2) + imgState.y * scaleFactor);
+        ctx.translate((targetW / 2) + (imgState.x * scaleFactor), (targetH / 2) + (imgState.y * scaleFactor));
         ctx.scale(imgState.scale, imgState.scale);
-        ctx.drawImage(currentMedia, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.drawImage(currentMedia, -baseW / 2, -baseH / 2, baseW, baseH);
         ctx.restore();
       }
 
-      // Jika overlay opacity > 0, gambar gradien dan kotak caption
+      // Ambil posisi elemen aktual dari DOM preview untuk menjamin 100% presisi visual
+      const footerDom = document.getElementById('permanentFooterBar');
+      const footerRect = footerDom.getBoundingClientRect();
+      const cardRect = captionCardBox.getBoundingClientRect();
+      const tagRect = previewTag.getBoundingClientRect();
+      const creditRect = toggleCredit.checked ? previewCreditBadge.getBoundingClientRect() : null;
+
+      const boxX = (cardRect.left - rect.left) * scaleFactor;
+      const boxY = (cardRect.top - rect.top) * scaleFactor;
+      const boxW = cardRect.width * scaleFactor;
+      const boxH = cardRect.height * scaleFactor;
+
+      // 1. Gambar Bagian Fading (Gradien, Latar Biru Bawah, Tag, Credit, dan Kotak Caption)
       if (overlayOpacity > 0.001) {
         ctx.save();
         ctx.globalAlpha = overlayOpacity;
 
         const isBlueBgActive = toggleBlueBg.checked;
         if (isBlueBgActive) {
-          const gradYStart = isTiktok ? targetH * 0.45 : targetH * 0.35;
-          const gradYEnd = isTiktok ? targetH * 0.72 : targetH * 0.70;
-          const solidHeight = isTiktok ? targetH * 0.28 : targetH * 0.38;
+          const solidDom = document.getElementById('solidBottomBg');
+          const solidRect = solidDom.getBoundingClientRect();
+          const solidH = solidRect.height * scaleFactor;
+          const solidY = (solidRect.top - rect.top) * scaleFactor;
 
-          const grad = ctx.createLinearGradient(0, gradYStart, 0, gradYEnd);
+          const gradH = targetH * (isTiktok ? 0.35 : 0.32);
+          const gradYStart = Math.max(0, solidY - gradH);
+
+          const grad = ctx.createLinearGradient(0, gradYStart, 0, solidY);
           grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
           grad.addColorStop(1, '#4262b2');
           ctx.fillStyle = grad;
-          ctx.fillRect(0, gradYStart, targetW, gradYEnd - gradYStart);
+          ctx.fillRect(0, gradYStart, targetW, solidY - gradYStart);
 
           ctx.fillStyle = primaryColorInput.value || '#4262b2';
-          ctx.fillRect(0, targetH - solidHeight, targetW, solidHeight);
+          ctx.fillRect(0, solidY, targetW, solidH);
         }
 
-        // Hitung Teks & Dimensi Kotak
-        const computedFontPx = parseFloat(window.getComputedStyle(previewHeadline).fontSize);
-        const highResFontSize = Math.round(computedFontPx * scaleFactor);
-        const lineHeight = highResFontSize * parseFloat(lineHeightSelect.value);
-
-        ctx.font = `900 ${highResFontSize}px Poppins, sans-serif`;
-        const words = (headlineInput.value || '').split(' ');
-        const lines = [];
-        let currentLine = '';
-        
-        const boxMarginX = Math.round(targetW * 0.065);
-        const boxW = targetW - (boxMarginX * 2);
-        const maxTextWidth = boxW - (isTiktok ? 150 : 80);
-
-        for (let i = 0; i < words.length; i++) {
-          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
-          const testWidth = ctx.measureText(testLine).width;
-          if (testWidth > maxTextWidth && i > 0) {
-            lines.push(currentLine);
-            currentLine = words[i];
-          } else {
-            currentLine = testLine;
-          }
-        }
-        lines.push(currentLine);
-
-        const textBlockHeight = lines.length * lineHeight;
-        const boxPaddingVertical = (isTiktok ? 70 : 36) * scaleFactor;
-        const boxH = Math.max(textBlockHeight + boxPaddingVertical, isTiktok ? 240 : 120);
-
-        const footerY = isTiktok ? targetH - 150 : 1000;
-        const boxBottomY = footerY - (isTiktok ? 70 : 25);
-        const boxY = boxBottomY - boxH;
-        const boxX = boxMarginX;
-
-        // Render Tag Badge
+        // Render Tag Badge (Kiri)
         const tagText = (tagInput.value || 'JKT48').toUpperCase();
-        const tagFontSize = Math.round(isTiktok ? 56 : 26);
-        ctx.font = `bold ${tagFontSize}px Poppins, sans-serif`;
-        const tagMetrics = ctx.measureText(tagText);
-        const tagPaddingX = isTiktok ? 70 : 42;
-        const tagWidth = tagMetrics.width + tagPaddingX;
-        const tagHeight = isTiktok ? 96 : 44;
-        const tagRadius = isTiktok ? 16 : 10;
-        const tagY = boxY - tagHeight - (isTiktok ? 24 : 12);
-        const tagX = boxX;
+        const tagX = (tagRect.left - rect.left) * scaleFactor;
+        const tagY = (tagRect.top - rect.top) * scaleFactor;
+        const tagWidth = tagRect.width * scaleFactor;
+        const tagHeight = tagRect.height * scaleFactor;
+        const tagRadius = Math.max(4, 8 * scaleFactor);
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.roundRect(tagX, tagY, tagWidth, tagHeight, tagRadius);
         ctx.fill();
 
+        const tagComputed = window.getComputedStyle(previewTag);
+        const tagFontSize = Math.round(parseFloat(tagComputed.fontSize) * scaleFactor);
+        ctx.font = `900 ${tagFontSize}px Poppins, sans-serif`;
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
         ctx.textBaseline = 'middle';
-        ctx.textAlign = 'left';
-        ctx.fillText(tagText, tagX + (tagPaddingX / 2), tagY + (tagHeight / 2) + 2);
+        ctx.textAlign = 'center';
+        ctx.fillText(tagText, tagX + (tagWidth / 2), tagY + (tagHeight / 2) + (1 * scaleFactor));
 
-        // Render Credit Badge
-        if (toggleCredit.checked) {
+        // Render Credit Badge (Kanan)
+        if (toggleCredit.checked && creditRect) {
           const creditStr = (creditInput.value || 'Sumber: Twitter/X').toUpperCase();
-          const creditFontSize = Math.round(isTiktok ? 42 : 20);
-          ctx.font = `700 ${creditFontSize}px Poppins, sans-serif`;
-          const creditMetrics = ctx.measureText(creditStr);
-          const creditPaddingX = isTiktok ? 60 : 36;
-          const creditW = creditMetrics.width + creditPaddingX;
-          const creditH = isTiktok ? 90 : 42;
-          const creditX = (boxX + boxW) - creditW;
-          const creditY = tagY + (tagHeight - creditH) / 2;
+          const creditX = (creditRect.left - rect.left) * scaleFactor;
+          const creditY = (creditRect.top - rect.top) * scaleFactor;
+          const creditW = creditRect.width * scaleFactor;
+          const creditH = creditRect.height * scaleFactor;
 
           ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
           ctx.beginPath();
@@ -1119,11 +1097,16 @@
           ctx.fill();
 
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-          ctx.lineWidth = isTiktok ? 3 : 1.5;
+          ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
           ctx.stroke();
 
+          const creditComputed = window.getComputedStyle(previewCreditText);
+          const creditFontSize = Math.round(parseFloat(creditComputed.fontSize) * scaleFactor);
+          ctx.font = `700 ${creditFontSize}px Poppins, sans-serif`;
           ctx.fillStyle = '#ffffff';
-          ctx.fillText(creditStr, creditX + (creditPaddingX / 2), creditY + (creditH / 2) + 2);
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center';
+          ctx.fillText(creditStr, creditX + (creditW / 2), creditY + (creditH / 2) + (1 * scaleFactor));
         }
 
         // Render Kotak Putih Dinamis
@@ -1138,19 +1121,11 @@
         ctx.clip();
         ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
 
-        const shardCoords = isTiktok 
-          ? [
-              [[boxX, boxBottomY], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxBottomY]],
-              [[boxX + boxW * 0.3, boxBottomY], [boxX + boxW * 0.5, boxY], [boxX + boxW * 0.65, boxBottomY]],
-              [[boxX + boxW * 0.6, boxBottomY], [boxX + boxW * 0.8, boxY], [boxX + boxW * 0.95, boxBottomY]]
-            ]
-          : [
-              [[70, boxBottomY], [200, boxY], [300, boxBottomY]],
-              [[270, boxBottomY], [420, boxY], [540, boxBottomY]],
-              [[500, boxBottomY], [680, boxY], [800, boxBottomY]],
-              [[760, boxBottomY], [920, boxY], [1010, boxBottomY]],
-              [[0, boxY + boxH * 0.5], [160, boxY], [240, boxBottomY]]
-            ];
+        const shardCoords = [
+          [[boxX, boxY + boxH], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxY + boxH]],
+          [[boxX + boxW * 0.28, boxY + boxH], [boxX + boxW * 0.48, boxY], [boxX + boxW * 0.62, boxY + boxH]],
+          [[boxX + boxW * 0.58, boxY + boxH], [boxX + boxW * 0.78, boxY], [boxX + boxW * 0.92, boxY + boxH]]
+        ];
 
         shardCoords.forEach(poly => {
           ctx.beginPath();
@@ -1163,69 +1138,107 @@
         ctx.restore();
 
         // Border Kotak Caption
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = isTiktok ? 5 : 2.5;
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = Math.max(2, 3.5 * scaleFactor);
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-        // Render Teks Headline
-        ctx.fillStyle = primaryColorInput.value || '#4262b2';
-        ctx.font = `900 ${highResFontSize}px Poppins, sans-serif`;
-        ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
+        // Render Teks Headline (Simetris Atas, Bawah, Kiri, Kanan)
+        const computedHeadline = window.getComputedStyle(previewHeadline);
+        const headlineFontSize = Math.round(parseFloat(computedHeadline.fontSize) * scaleFactor);
+        const headlineLineHeight = headlineFontSize * parseFloat(lineHeightSelect.value);
 
-        const startTextY = boxY + (boxH - textBlockHeight) / 2 + (highResFontSize * 0.86);
-        const textPadding = isTiktok ? 70 : 40;
-        const textX = textAlignSelect.value === 'center' ? boxX + boxW / 2 : boxX + textPadding;
-
-        lines.forEach((line, index) => {
-          ctx.fillText(line, textX, startTextY + (index * lineHeight));
-        });
-
-        // Render Footer
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#ffffff';
-        const brandFontSize = Math.round(isTiktok ? 52 : 24);
-        ctx.font = `900 ${brandFontSize}px Poppins, sans-serif`;
-        const brandText = 'OSHITIVE+';
-        const footerBaselineY = isTiktok ? targetH - 120 : 1025;
+        ctx.font = `900 ${headlineFontSize}px Poppins, sans-serif`;
+        const words = (headlineInput.value || '').split(' ');
+        const lines = [];
+        let currentLine = '';
         
-        ctx.fillText(brandText, boxX, footerBaselineY);
-        const brandW = ctx.measureText(brandText).width;
+        // Sesuaikan padding horizontal agar persis dengan display preview
+        const headlineRect = previewHeadline.getBoundingClientRect();
+        const textPadX = Math.round((headlineRect.left - cardRect.left) * scaleFactor);
+        const maxTextW = boxW - (textPadX * 2);
 
-        const ctaFontSize = Math.round(isTiktok ? 45 : 21);
-        ctx.font = `700 ${ctaFontSize}px Poppins, sans-serif`;
-        const ctaText = footerCtaInput.value || 'Baca berita selengkapnya di oshitive.com';
-        const ctaW = ctx.measureText(ctaText).width;
-        const ctaX = (boxX + boxW) - ctaW;
-        ctx.fillText(ctaText, ctaX, footerBaselineY);
-
-        const lineSpacing = isTiktok ? 40 : 24;
-        const lineStartX = boxX + brandW + lineSpacing;
-        const lineEndX = ctaX - lineSpacing;
-        const lineY = footerBaselineY - (isTiktok ? 16 : 8);
-
-        if (lineEndX > lineStartX + 30) {
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = isTiktok ? 6 : 3;
-
-          const dotRadius = isTiktok ? 10 : 5;
-
-          ctx.beginPath();
-          ctx.arc(lineStartX, lineY, dotRadius, 0, Math.PI * 2);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(lineStartX + dotRadius + 2, lineY);
-          ctx.lineTo(lineEndX - dotRadius - 2, lineY);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.arc(lineEndX, lineY, dotRadius, 0, Math.PI * 2);
-          ctx.stroke();
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+          const testWidth = ctx.measureText(testLine).width;
+          if (testWidth > maxTextW && i > 0) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
         }
+        lines.push(currentLine);
+
+        // Hitung vertikal tengah secara presisi
+        const textTotalH = (lines.length - 1) * headlineLineHeight + headlineFontSize;
+        const textStartY = boxY + ((boxH - textTotalH) / 2) + (headlineFontSize * 0.82);
+
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
+        const textTargetX = textAlignSelect.value === 'center' ? (boxX + boxW / 2) : (boxX + textPadX);
+
+        lines.forEach((line, idx) => {
+          ctx.fillText(line, textTargetX, textStartY + (idx * headlineLineHeight));
+        });
 
         ctx.restore();
       }
 
+      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL (TIDAK IKUT HILANG)
+      ctx.save();
+      const footY = (footerRect.top - rect.top) * scaleFactor;
+      const footH = footerRect.height * scaleFactor;
+      const footBaselineY = footY + (footH / 2);
+
+      // Watermark OSHITIVE+ Kiri
+      const brandDom = document.getElementById('previewBrand');
+      const brandComputed = window.getComputedStyle(brandDom);
+      const brandFontSize = Math.round(parseFloat(brandComputed.fontSize) * scaleFactor);
+      ctx.font = `900 ${brandFontSize}px Poppins, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const brandText = 'OSHITIVE+';
+      ctx.fillText(brandText, boxX, footBaselineY);
+      const brandW = ctx.measureText(brandText).width;
+
+      // Footer CTA Kanan
+      const ctaDom = document.getElementById('previewFooterCta');
+      const ctaComputed = window.getComputedStyle(ctaDom);
+      const ctaFontSize = Math.round(parseFloat(ctaComputed.fontSize) * scaleFactor);
+      ctx.font = `700 ${ctaFontSize}px Poppins, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const ctaText = footerCtaInput.value || 'Baca berita selengkapnya di oshitive.com';
+      ctx.fillText(ctaText, boxX + boxW, footBaselineY);
+      const ctaW = ctx.measureText(ctaText).width;
+
+      // Garis Pin Penghubung
+      const lineGap = 12 * scaleFactor;
+      const lineStartX = boxX + brandW + lineGap;
+      const lineEndX = (boxX + boxW) - ctaW - lineGap;
+
+      if (lineEndX > lineStartX + (20 * scaleFactor)) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
+        const dotR = Math.max(2.5, 3.5 * scaleFactor);
+
+        ctx.beginPath();
+        ctx.arc(lineStartX, footBaselineY, dotR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineStartX + dotR + (2 * scaleFactor), footBaselineY);
+        ctx.lineTo(lineEndX - dotR - (2 * scaleFactor), footBaselineY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(lineEndX, footBaselineY, dotR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
       ctx.restore();
     }
 
@@ -1241,7 +1254,7 @@
         const targetW = isTiktok ? 1080 : 1080;
         const targetH = isTiktok ? 1440 : 1080; // Optimal untuk encoding video di browser
 
-        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span>Merekam Video...</span>`;
+        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span id="exportProgressText">Merekam Full Video (0%)...</span>`;
         downloadBtn.disabled = true;
 
         try {
@@ -1250,17 +1263,65 @@
           exportCanvas.height = targetH;
           const ctx = exportCanvas.getContext('2d');
 
-          const stream = exportCanvas.captureStream(30);
+          // Tangkap stream visual dari kanvas
+          const canvasStream = exportCanvas.captureStream(30);
+
+          // Tangkap audio track dari video asli agar suara masuk ke rekaman
+          let combinedStream = canvasStream;
+          let audioContext = null;
+
+          try {
+            // Cek apakah browser mendukung captureStream() langsung dari elemen video
+            let videoAudioStream = null;
+            if (typeof bgPreviewVideo.captureStream === 'function') {
+              videoAudioStream = bgPreviewVideo.captureStream();
+            } else if (typeof bgPreviewVideo.mozCaptureStream === 'function') {
+              videoAudioStream = bgPreviewVideo.mozCaptureStream();
+            }
+
+            if (videoAudioStream && videoAudioStream.getAudioTracks().length > 0) {
+              combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...videoAudioStream.getAudioTracks()
+              ]);
+            } else {
+              // Fallback routing audio via Web Audio API
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              if (AudioCtx) {
+                audioContext = new AudioCtx();
+                if (audioContext.state === 'suspended') {
+                  await audioContext.resume();
+                }
+                const source = audioContext.createMediaElementSource(bgPreviewVideo);
+                const dest = audioContext.createMediaStreamDestination();
+                source.connect(dest);
+                source.connect(audioContext.destination); // Tetap teruskan ke speaker/monitor
+
+                combinedStream = new MediaStream([
+                  ...canvasStream.getVideoTracks(),
+                  ...dest.stream.getAudioTracks()
+                ]);
+              }
+            }
+          } catch (audioErr) {
+            console.warn('Audio capture notice (menggunakan stream default):', audioErr);
+            combinedStream = canvasStream;
+          }
           
-          let mime = 'video/webm;codecs=vp9';
+          let mime = 'video/webm;codecs=vp9,opus';
+          if (!MediaRecorder.isTypeSupported(mime)) {
+            mime = 'video/webm;codecs=vp8,opus';
+          }
           if (!MediaRecorder.isTypeSupported(mime)) {
             mime = 'video/webm';
           }
-          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
-            mime = 'video/mp4;codecs=avc1';
+          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2')) {
+            mime = 'video/mp4;codecs=avc1,mp4a.40.2';
+          } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mime = 'video/mp4';
           }
 
-          const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+          const recorder = new MediaRecorder(combinedStream, { mimeType: mime, videoBitsPerSecond: 8000000 });
           const recordedChunks = [];
 
           recorder.ondataavailable = (e) => {
@@ -1268,6 +1329,9 @@
           };
 
           recorder.onstop = () => {
+            if (audioContext && audioContext.state !== 'closed') {
+              audioContext.close();
+            }
             const blob = new Blob(recordedChunks, { type: mime });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1275,44 +1339,66 @@
             a.download = `oshitive_video_${currentFormat}_${Date.now()}.${ext}`;
             a.href = url;
             a.click();
-            showToast('Video berhasil di-download!');
+            showToast('Full video berhasil di-download beserta audio!');
             downloadBtn.innerHTML = originalHtml;
             downloadBtn.disabled = false;
           };
 
-          // Reset playback video ke 0
+          // Pastikan video tidak termute saat direkam agar audio track aktif
+          const wasMuted = bgPreviewVideo.muted;
+          bgPreviewVideo.muted = false;
+
+          // Reset playback video ke awal (0 detik)
           bgPreviewVideo.pause();
           bgPreviewVideo.currentTime = 0;
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 300));
 
           recorder.start();
-          bgPreviewVideo.play();
+          await bgPreviewVideo.play();
 
-          const totalDuration = Math.min(bgPreviewVideo.duration || 10, 15); // Maksimal 15 detik
-          const startTime = performance.now();
+          // Rekam penuh sesuai durasi asli video
+          const totalDuration = bgPreviewVideo.duration && isFinite(bgPreviewVideo.duration) && bgPreviewVideo.duration > 0
+            ? bgPreviewVideo.duration 
+            : 10;
+          
+          const progressSpan = document.getElementById('exportProgressText');
+          let animationFrameId = null;
 
           function drawVideoLoop() {
-            const elapsed = (performance.now() - startTime) / 1000;
+            const curTime = bgPreviewVideo.currentTime;
             
-            // Hitung opacity overlay: pudar setelah detik ke-5
+            // Tampilkan progress persentase rekaman secara realtime
+            if (progressSpan) {
+              const pct = Math.min(100, Math.round((curTime / totalDuration) * 100));
+              progressSpan.textContent = `Merekam Full Video (${pct}%)...`;
+            }
+
+            // Hitung opacity overlay: pudar halus setelah detik ke-5
             let overlayOpacity = 1.0;
             if (toggleAutoFade.checked) {
-              if (elapsed > 5.0) {
-                overlayOpacity = Math.max(0, 1.0 - (elapsed - 5.0) * 2.0); // fade out dalam 0.5s
+              if (curTime >= 5.0) {
+                overlayOpacity = Math.max(0, 1.0 - (curTime - 5.0) * 2.0); // fade out dalam 0.5s
               }
             }
 
             renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
 
-            if (elapsed < totalDuration && !bgPreviewVideo.ended) {
-              requestAnimationFrame(drawVideoLoop);
+            // Berhenti hanya saat video telah selesai diputar secara penuh
+            if (!bgPreviewVideo.ended && curTime < totalDuration - 0.05) {
+              animationFrameId = requestAnimationFrame(drawVideoLoop);
             } else {
-              recorder.stop();
+              if (animationFrameId) cancelAnimationFrame(animationFrameId);
               bgPreviewVideo.pause();
+              bgPreviewVideo.muted = wasMuted; // Kembalikan status mute awal
+              setTimeout(() => {
+                if (recorder.state === 'recording') {
+                  recorder.stop();
+                }
+              }, 200);
             }
           }
 
-          requestAnimationFrame(drawVideoLoop);
+          animationFrameId = requestAnimationFrame(drawVideoLoop);
         } catch (err) {
           console.error(err);
           showToast('Gagal merekam video.');
