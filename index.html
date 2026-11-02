@@ -362,8 +362,10 @@
       startY: 0,
       initialScale: 1.0,
       initialDist: 0,
-      centerX: 0,
-      centerY: 0
+      anchorX: 0,
+      anchorY: 0,
+      initialW: 0,
+      initialH: 0
     };
 
     // DOM Elements
@@ -432,7 +434,7 @@
       imageTransformBox.setPointerCapture(e.pointerId);
     });
 
-    // Corner handle resize (tarikan ujung gambar untuk zoom in / zoom out)
+    // Corner handle resize dengan TITIK TUMPU (ANCHOR) di sudut berlawanan
     cornerHandles.forEach(handle => {
       handle.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
@@ -440,21 +442,70 @@
         imgState.handle = handle.dataset.handle;
         
         const boxRect = imageTransformBox.getBoundingClientRect();
-        imgState.centerX = boxRect.left + boxRect.width / 2;
-        imgState.centerY = boxRect.top + boxRect.height / 2;
-        imgState.initialDist = Math.hypot(e.clientX - imgState.centerX, e.clientY - imgState.centerY);
+        const containerRect = bgLayerContainer.getBoundingClientRect();
+        
+        // Tentukan titik sudut yang berlawanan (Anchor) yang harus tetap diam terkunci
+        if (imgState.handle === 'bottom-right') {
+          imgState.anchorX = boxRect.left;
+          imgState.anchorY = boxRect.top;
+        } else if (imgState.handle === 'bottom-left') {
+          imgState.anchorX = boxRect.right;
+          imgState.anchorY = boxRect.top;
+        } else if (imgState.handle === 'top-right') {
+          imgState.anchorX = boxRect.left;
+          imgState.anchorY = boxRect.bottom;
+        } else if (imgState.handle === 'top-left') {
+          imgState.anchorX = boxRect.right;
+          imgState.anchorY = boxRect.bottom;
+        }
+
         imgState.initialScale = imgState.scale;
+        imgState.initialDist = Math.hypot(e.clientX - imgState.anchorX, e.clientY - imgState.anchorY);
+        imgState.initialW = boxRect.width;
+        imgState.initialH = boxRect.height;
         
         handle.setPointerCapture(e.pointerId);
       });
 
       handle.addEventListener('pointermove', (e) => {
         if (imgState.mode !== 'resize') return;
-        const currentDist = Math.hypot(e.clientX - imgState.centerX, e.clientY - imgState.centerY);
-        if (imgState.initialDist > 0) {
+        
+        const currentDist = Math.hypot(e.clientX - imgState.anchorX, e.clientY - imgState.anchorY);
+        if (imgState.initialDist > 5) {
           const ratio = currentDist / imgState.initialDist;
           const newScale = Math.min(Math.max(imgState.initialScale * ratio, 0.2), 4.0);
+          
+          // Hitung perubahan ukuran
+          const actualRatio = newScale / imgState.initialScale;
+          const newW = imgState.initialW * actualRatio;
+          const newH = imgState.initialH * actualRatio;
+
+          // Hitung pusat baru agar sudut tumpu (anchor) tidak bergerak sama sekali
+          let newCenterX = 0;
+          let newCenterY = 0;
+
+          if (imgState.handle === 'bottom-right') {
+            newCenterX = imgState.anchorX + newW / 2;
+            newCenterY = imgState.anchorY + newH / 2;
+          } else if (imgState.handle === 'bottom-left') {
+            newCenterX = imgState.anchorX - newW / 2;
+            newCenterY = imgState.anchorY + newH / 2;
+          } else if (imgState.handle === 'top-right') {
+            newCenterX = imgState.anchorX + newW / 2;
+            newCenterY = imgState.anchorY - newH / 2;
+          } else if (imgState.handle === 'top-left') {
+            newCenterX = imgState.anchorX - newW / 2;
+            newCenterY = imgState.anchorY - newH / 2;
+          }
+
+          const containerRect = bgLayerContainer.getBoundingClientRect();
+          const containerMidX = containerRect.left + containerRect.width / 2;
+          const containerMidY = containerRect.top + containerRect.height / 2;
+
+          imgState.x = newCenterX - containerMidX;
+          imgState.y = newCenterY - containerMidY;
           imgState.scale = newScale;
+          
           renderImageTransform();
         }
       });
