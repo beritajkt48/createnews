@@ -37,12 +37,7 @@
     /* Poligon geometris watermark sesuai gambar template */
     .pattern-shards {
       background-color: #f7f9fd;
-      background-image: 
-        radial-gradient(circle at 50% 120%, rgba(66, 98, 178, 0.12), transparent 70%),
-        linear-gradient(115deg, transparent 40%, rgba(66, 98, 178, 0.08) 40%, rgba(66, 98, 178, 0.08) 50%, transparent 50%),
-        linear-gradient(240deg, transparent 35%, rgba(66, 98, 178, 0.1) 35%, rgba(66, 98, 178, 0.1) 48%, transparent 48%),
-        linear-gradient(70deg, transparent 60%, rgba(66, 98, 178, 0.07) 60%, rgba(66, 98, 178, 0.07) 72%, transparent 72%),
-        linear-gradient(190deg, transparent 20%, rgba(66, 98, 178, 0.08) 20%, rgba(66, 98, 178, 0.08) 32%, transparent 32%);
+      position: relative;
     }
 
     input[type=range] {
@@ -387,38 +382,39 @@
             <div id="fadingCaptionSection" class="w-full flex flex-col justify-end pointer-events-auto transition-opacity duration-700">
               
               <!-- Meta Badges Row: Tag (Kiri) & Credit / Sumber (Kanan) Sejajar di Puncak Box -->
-              <div id="metaRowContainer" class="w-full mb-2 flex items-center justify-between">
+              <div id="metaRowContainer" class="w-full mb-1.5 flex items-center justify-between">
                 <!-- Tag Badge -->
-                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-lg shadow-md border border-white/80 uppercase">
+                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-md shadow-md border border-white/80 uppercase">
                   JKT48
                 </span>
 
                 <!-- Credit / Sumber Badge (Bisa di-toggle ON/OFF) -->
-                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md flex items-center gap-1.5 uppercase tracking-wide">
+                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-md shadow-md flex items-center gap-1.5 uppercase tracking-wide">
                   <i class="ph-bold ph-camera text-[11px] text-blue-300"></i>
                   <span id="previewCreditText">Sumber: Twitter/X</span>
                 </div>
               </div>
 
-              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) -->
-              <div id="captionCardBox" class="w-full rounded-none border border-slate-900 shadow-2xl overflow-hidden pattern-shards relative p-3.5 sm:p-5 h-auto transition-all duration-200">
+              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) DENGAN PADDING SIMETRIS -->
+              <div id="captionCardBox" class="w-full rounded-none border-[2.5px] border-[#111827] shadow-2xl overflow-hidden pattern-shards relative px-5 py-4 sm:px-7 sm:py-5 h-auto transition-all duration-200 flex items-center bg-[#f7f9fd]">
                 
-                <!-- SVG Low-Poly Shard Watermark Background -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]" preserveAspectRatio="none" viewBox="0 0 600 240" fill="none">
-                  <polygon points="40,240 120,40 180,240" fill="#4262b2" />
-                  <polygon points="170,240 260,0 330,240" fill="#4262b2" />
-                  <polygon points="310,240 400,20 480,240" fill="#4262b2" />
-                  <polygon points="460,240 540,60 610,240" fill="#4262b2" />
-                  <polygon points="0,180 80,0 140,200" fill="#203a7d" />
-                  <polygon points="220,240 310,40 370,240" fill="#203a7d" />
+                <!-- SVG Low-Poly Shard Watermark Background (Zigzag tajam khas Oshitive) -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.22]" preserveAspectRatio="none" viewBox="0 0 800 240" fill="none">
+                  <polygon points="0,0 85,240 160,0" fill="#4262b2" opacity="0.4" />
+                  <polygon points="120,240 210,0 290,240" fill="#203a7d" opacity="0.35" />
+                  <polygon points="260,0 350,240 430,0" fill="#4262b2" opacity="0.5" />
+                  <polygon points="390,240 490,0 570,240" fill="#203a7d" opacity="0.3" />
+                  <polygon points="530,0 630,240 710,0" fill="#4262b2" opacity="0.45" />
+                  <polygon points="670,240 760,0 800,240" fill="#203a7d" opacity="0.35" />
+                  <polygon points="730,0 800,180 800,0" fill="#4262b2" opacity="0.25" />
                 </svg>
 
                 <!-- Dynamic Headline Text -->
-                <div id="headlineWrapper" class="relative z-10 w-full">
+                <div id="headlineWrapper" class="relative z-10 w-full flex items-center">
                   <h2 id="previewHeadline" 
-                      class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
-                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.025em; word-break: break-word;">
-                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR
+                      class="font-poppins font-black text-left w-full leading-[1.08] select-text" 
+                      style="color: #4262b2; font-size: 26px; letter-spacing: -0.025em; word-break: break-word;">
+                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
                   </h2>
                 </div>
               </div>
@@ -977,14 +973,14 @@
       creditInput.disabled = false;
       creditInput.value = "Sumber: Twitter/X";
       previewCreditText.textContent = creditInput.value;
-      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR";
+      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari";
       previewHeadline.textContent = headlineInput.value;
       footerCtaInput.value = "Baca berita selengkapnya di oshitive.com";
       previewFooterCta.textContent = footerCtaInput.value;
-      manualFontSizeInput.value = 24;
-      manualFontSizeVal.textContent = "24px";
-      lineHeightSelect.value = "1.14";
-      previewHeadline.style.lineHeight = "1.14";
+      manualFontSizeInput.value = 26;
+      manualFontSizeVal.textContent = "26px";
+      lineHeightSelect.value = "1.08";
+      previewHeadline.style.lineHeight = "1.08";
       applyPrimaryColor("#4262b2");
       updateHeadline();
       showToast('Teks di-reset ke default');
@@ -1000,7 +996,6 @@
       ctx.fillRect(0, 0, targetW, targetH);
 
       // Gambar Media Latar (Foto atau Video)
-      // Gunakan ukuran bounding box asli display agar tampilan persis 1:1 identik
       const currentMedia = mediaType === 'video' ? bgPreviewVideo : bgPreviewImg;
       const mediaW = mediaType === 'video' ? bgPreviewVideo.videoWidth : bgPreviewImg.naturalWidth;
       const mediaH = mediaType === 'video' ? bgPreviewVideo.videoHeight : bgPreviewImg.naturalHeight;
@@ -1068,7 +1063,7 @@
         const tagY = (tagRect.top - rect.top) * scaleFactor;
         const tagWidth = tagRect.width * scaleFactor;
         const tagHeight = tagRect.height * scaleFactor;
-        const tagRadius = Math.max(4, 8 * scaleFactor);
+        const tagRadius = Math.max(4, 7 * scaleFactor);
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
@@ -1110,49 +1105,54 @@
         }
 
         // Render Kotak Putih Dinamis
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = '#f8fafd';
+        ctx.fillStyle = '#f7f9fd';
         ctx.fillRect(boxX, boxY, boxW, boxH);
 
-        // Watermark polygons
+        // Watermark Shards Zigzag (Persis seperti tampilan display)
         ctx.save();
         ctx.beginPath();
         ctx.rect(boxX, boxY, boxW, boxH);
         ctx.clip();
-        ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
 
-        const shardCoords = [
-          [[boxX, boxY + boxH], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxY + boxH]],
-          [[boxX + boxW * 0.28, boxY + boxH], [boxX + boxW * 0.48, boxY], [boxX + boxW * 0.62, boxY + boxH]],
-          [[boxX + boxW * 0.58, boxY + boxH], [boxX + boxW * 0.78, boxY], [boxX + boxW * 0.92, boxY + boxH]]
+        const shardCols = [
+          { p: [[0, 0], [0.10, 1], [0.20, 0]], color: 'rgba(66, 98, 178, 0.08)' },
+          { p: [[0.15, 1], [0.26, 0], [0.36, 1]], color: 'rgba(32, 58, 125, 0.07)' },
+          { p: [[0.32, 0], [0.44, 1], [0.54, 0]], color: 'rgba(66, 98, 178, 0.09)' },
+          { p: [[0.49, 1], [0.61, 0], [0.71, 1]], color: 'rgba(32, 58, 125, 0.06)' },
+          { p: [[0.66, 0], [0.79, 1], [0.89, 0]], color: 'rgba(66, 98, 178, 0.08)' },
+          { p: [[0.84, 1], [0.95, 0], [1.00, 1]], color: 'rgba(32, 58, 125, 0.07)' }
         ];
 
-        shardCoords.forEach(poly => {
+        shardCols.forEach(s => {
+          ctx.fillStyle = s.color;
           ctx.beginPath();
-          ctx.moveTo(poly[0][0], poly[0][1]);
-          ctx.lineTo(poly[1][0], poly[1][1]);
-          ctx.lineTo(poly[2][0], poly[2][1]);
+          ctx.moveTo(boxX + s.p[0][0] * boxW, boxY + s.p[0][1] * boxH);
+          ctx.lineTo(boxX + s.p[1][0] * boxW, boxY + s.p[1][1] * boxH);
+          ctx.lineTo(boxX + s.p[2][0] * boxW, boxY + s.p[2][1] * boxH);
           ctx.closePath();
           ctx.fill();
         });
         ctx.restore();
 
-        // Border Kotak Caption
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = Math.max(1.5, 2.5 * scaleFactor);
+        // Border Kotak Caption (tegas & rapi)
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = Math.max(2, 3.2 * scaleFactor);
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-        // Render Teks Headline (Wrapping akurat mengikuti lebar preview)
+        // Render Teks Headline (Simetris Atas, Bawah, Kiri, Kanan)
         const computedHeadline = window.getComputedStyle(previewHeadline);
         const headlineFontSize = Math.round(parseFloat(computedHeadline.fontSize) * scaleFactor);
-        const headlineLineHeight = headlineFontSize * parseFloat(lineHeightSelect.value);
+        const lineLeading = parseFloat(lineHeightSelect.value) || 1.08;
+        const headlineLineHeight = headlineFontSize * lineLeading;
 
         ctx.font = `900 ${headlineFontSize}px Poppins, sans-serif`;
         const words = (headlineInput.value || '').split(' ');
         const lines = [];
         let currentLine = '';
         
-        const textPadX = 18 * scaleFactor;
+        // Sesuaikan padding horizontal agar persis dengan display preview
+        const headlineRect = previewHeadline.getBoundingClientRect();
+        const textPadX = Math.round((headlineRect.left - cardRect.left) * scaleFactor);
         const maxTextW = boxW - (textPadX * 2);
 
         for (let i = 0; i < words.length; i++) {
@@ -1167,8 +1167,9 @@
         }
         lines.push(currentLine);
 
-        const textTotalH = lines.length * headlineLineHeight;
-        const textStartY = boxY + (boxH - textTotalH) / 2 + (headlineFontSize * 0.85);
+        // Hitung vertikal tengah secara presisi
+        const textTotalH = (lines.length - 1) * headlineLineHeight + headlineFontSize;
+        const textStartY = boxY + ((boxH - textTotalH) / 2) + (headlineFontSize * 0.84);
 
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
         ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
@@ -1181,9 +1182,7 @@
         ctx.restore();
       }
 
-      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL (TIDAK IKUT HILANG)
-      ctx.save();
-      const footY = (footerRect.top - rect.top) * scaleFactor;
+      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL
       const footH = footerRect.height * scaleFactor;
       const footBaselineY = footY + (footH / 2);
 
