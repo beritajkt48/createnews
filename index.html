@@ -235,6 +235,17 @@
             </div>
           </div>
 
+          <!-- Opsi Toggle Latar Biru #4262b2 Bawah -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 cursor-pointer" for="toggleBlueBg">
+              <i class="ph-bold ph-paint-bucket text-[#4262b2]"></i> Latar Biru Bawah (#4262b2)
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleBlueBg" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+              <span id="labelBlueBgStatus" class="text-[11px] font-semibold text-blue-300">Aktif</span>
+            </label>
+          </div>
+
           <!-- Credit / Sumber Controls (Sejajar Kanan) -->
           <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
             <div class="flex items-center justify-between mb-1.5">
@@ -519,6 +530,8 @@
     const primaryColorInput = document.getElementById('primaryColorInput');
     const primaryColorHex = document.getElementById('primaryColorHex');
     const solidBottomBg = document.getElementById('solidBottomBg');
+    const toggleBlueBg = document.getElementById('toggleBlueBg');
+    const labelBlueBgStatus = document.getElementById('labelBlueBgStatus');
 
     const toggleCredit = document.getElementById('toggleCredit');
     const creditInput = document.getElementById('creditInput');
@@ -927,6 +940,15 @@
       }
     });
 
+    // Toggle Latar Biru Bawah #4262b2 & Gradien
+    toggleBlueBg.addEventListener('change', () => {
+      const isVisible = toggleBlueBg.checked;
+      labelBlueBgStatus.textContent = isVisible ? 'Aktif' : 'Mati';
+      labelBlueBgStatus.className = isVisible ? 'text-[11px] font-semibold text-blue-300' : 'text-[11px] font-semibold text-slate-400';
+      solidBottomBg.classList.toggle('hidden', !isVisible);
+      gradientOverlay.classList.toggle('hidden', !isVisible);
+    });
+
     function applyPrimaryColor(color) {
       previewHeadline.style.color = color;
       previewTag.style.color = color;
@@ -1006,18 +1028,21 @@
         ctx.save();
         ctx.globalAlpha = overlayOpacity;
 
-        const gradYStart = isTiktok ? targetH * 0.45 : targetH * 0.35;
-        const gradYEnd = isTiktok ? targetH * 0.72 : targetH * 0.70;
-        const solidHeight = isTiktok ? targetH * 0.28 : targetH * 0.38;
+        const isBlueBgActive = toggleBlueBg.checked;
+        if (isBlueBgActive) {
+          const gradYStart = isTiktok ? targetH * 0.45 : targetH * 0.35;
+          const gradYEnd = isTiktok ? targetH * 0.72 : targetH * 0.70;
+          const solidHeight = isTiktok ? targetH * 0.28 : targetH * 0.38;
 
-        const grad = ctx.createLinearGradient(0, gradYStart, 0, gradYEnd);
-        grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
-        grad.addColorStop(1, '#4262b2');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, gradYStart, targetW, gradYEnd - gradYStart);
+          const grad = ctx.createLinearGradient(0, gradYStart, 0, gradYEnd);
+          grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
+          grad.addColorStop(1, '#4262b2');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, gradYStart, targetW, gradYEnd - gradYStart);
 
-        ctx.fillStyle = primaryColorInput.value || '#4262b2';
-        ctx.fillRect(0, targetH - solidHeight, targetW, solidHeight);
+          ctx.fillStyle = primaryColorInput.value || '#4262b2';
+          ctx.fillRect(0, targetH - solidHeight, targetW, solidHeight);
+        }
 
         // Hitung Teks & Dimensi Kotak
         const computedFontPx = parseFloat(window.getComputedStyle(previewHeadline).fontSize);
