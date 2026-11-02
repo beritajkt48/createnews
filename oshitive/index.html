@@ -1251,7 +1251,7 @@
         const targetW = isTiktok ? 1080 : 1080;
         const targetH = isTiktok ? 1440 : 1080; // Optimal untuk encoding video di browser
 
-        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span>Merekam Video...</span>`;
+        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span id="exportProgressText">Merekam Full Video (0%)...</span>`;
         downloadBtn.disabled = true;
 
         try {
@@ -1260,17 +1260,65 @@
           exportCanvas.height = targetH;
           const ctx = exportCanvas.getContext('2d');
 
-          const stream = exportCanvas.captureStream(30);
+          // Tangkap stream visual dari kanvas
+          const canvasStream = exportCanvas.captureStream(30);
+
+          // Tangkap audio track dari video asli agar suara masuk ke rekaman
+          let combinedStream = canvasStream;
+          let audioContext = null;
+
+          try {
+            // Cek apakah browser mendukung captureStream() langsung dari elemen video
+            let videoAudioStream = null;
+            if (typeof bgPreviewVideo.captureStream === 'function') {
+              videoAudioStream = bgPreviewVideo.captureStream();
+            } else if (typeof bgPreviewVideo.mozCaptureStream === 'function') {
+              videoAudioStream = bgPreviewVideo.mozCaptureStream();
+            }
+
+            if (videoAudioStream && videoAudioStream.getAudioTracks().length > 0) {
+              combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...videoAudioStream.getAudioTracks()
+              ]);
+            } else {
+              // Fallback routing audio via Web Audio API
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              if (AudioCtx) {
+                audioContext = new AudioCtx();
+                if (audioContext.state === 'suspended') {
+                  await audioContext.resume();
+                }
+                const source = audioContext.createMediaElementSource(bgPreviewVideo);
+                const dest = audioContext.createMediaStreamDestination();
+                source.connect(dest);
+                source.connect(audioContext.destination); // Tetap teruskan ke speaker/monitor
+
+                combinedStream = new MediaStream([
+                  ...canvasStream.getVideoTracks(),
+                  ...dest.stream.getAudioTracks()
+                ]);
+              }
+            }
+          } catch (audioErr) {
+            console.warn('Audio capture notice (menggunakan stream default):', audioErr);
+            combinedStream = canvasStream;
+          }
           
-          let mime = 'video/webm;codecs=vp9';
+          let mime = 'video/webm;codecs=vp9,opus';
+          if (!MediaRecorder.isTypeSupported(mime)) {
+            mime = 'video/webm;codecs=vp8,opus';
+          }
           if (!MediaRecorder.isTypeSupported(mime)) {
             mime = 'video/webm';
           }
-          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
-            mime = 'video/mp4;codecs=avc1';
+          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2')) {
+            mime = 'video/mp4;codecs=avc1,mp4a.40.2';
+          } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mime = 'video/mp4';
           }
 
-          const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+          const recorder = new MediaRecorder(combinedStream, { mimeType: mime, videoBitsPerSecond: 8000000 });
           const recordedChunks = [];
 
           recorder.ondataavailable = (e) => {
@@ -1278,6 +1326,9 @@
           };
 
           recorder.onstop = () => {
+            if (audioContext && audioContext.state !== 'closed') {
+              audioContext.close();
+            }
             const blob = new Blob(recordedChunks, { type: mime });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1285,44 +1336,66 @@
             a.download = `oshitive_video_${currentFormat}_${Date.now()}.${ext}`;
             a.href = url;
             a.click();
-            showToast('Video berhasil di-download!');
+            showToast('Full video berhasil di-download beserta audio!');
             downloadBtn.innerHTML = originalHtml;
             downloadBtn.disabled = false;
           };
 
-          // Reset playback video ke 0
+          // Pastikan video tidak termute saat direkam agar audio track aktif
+          const wasMuted = bgPreviewVideo.muted;
+          bgPreviewVideo.muted = false;
+
+          // Reset playback video ke awal (0 detik)
           bgPreviewVideo.pause();
           bgPreviewVideo.currentTime = 0;
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 300));
 
           recorder.start();
-          bgPreviewVideo.play();
+          await bgPreviewVideo.play();
 
-          const totalDuration = Math.min(bgPreviewVideo.duration || 10, 15); // Maksimal 15 detik
-          const startTime = performance.now();
+          // Rekam penuh sesuai durasi asli video
+          const totalDuration = bgPreviewVideo.duration && isFinite(bgPreviewVideo.duration) && bgPreviewVideo.duration > 0
+            ? bgPreviewVideo.duration 
+            : 10;
+          
+          const progressSpan = document.getElementById('exportProgressText');
+          let animationFrameId = null;
 
           function drawVideoLoop() {
-            const elapsed = (performance.now() - startTime) / 1000;
+            const curTime = bgPreviewVideo.currentTime;
             
-            // Hitung opacity overlay: pudar setelah detik ke-5
+            // Tampilkan progress persentase rekaman secara realtime
+            if (progressSpan) {
+              const pct = Math.min(100, Math.round((curTime / totalDuration) * 100));
+              progressSpan.textContent = `Merekam Full Video (${pct}%)...`;
+            }
+
+            // Hitung opacity overlay: pudar halus setelah detik ke-5
             let overlayOpacity = 1.0;
             if (toggleAutoFade.checked) {
-              if (elapsed > 5.0) {
-                overlayOpacity = Math.max(0, 1.0 - (elapsed - 5.0) * 2.0); // fade out dalam 0.5s
+              if (curTime >= 5.0) {
+                overlayOpacity = Math.max(0, 1.0 - (curTime - 5.0) * 2.0); // fade out dalam 0.5s
               }
             }
 
             renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
 
-            if (elapsed < totalDuration && !bgPreviewVideo.ended) {
-              requestAnimationFrame(drawVideoLoop);
+            // Berhenti hanya saat video telah selesai diputar secara penuh
+            if (!bgPreviewVideo.ended && curTime < totalDuration - 0.05) {
+              animationFrameId = requestAnimationFrame(drawVideoLoop);
             } else {
-              recorder.stop();
+              if (animationFrameId) cancelAnimationFrame(animationFrameId);
               bgPreviewVideo.pause();
+              bgPreviewVideo.muted = wasMuted; // Kembalikan status mute awal
+              setTimeout(() => {
+                if (recorder.state === 'recording') {
+                  recorder.stop();
+                }
+              }, 200);
             }
           }
 
-          requestAnimationFrame(drawVideoLoop);
+          animationFrameId = requestAnimationFrame(drawVideoLoop);
         } catch (err) {
           console.error(err);
           showToast('Gagal merekam video.');
