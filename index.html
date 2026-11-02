@@ -48,27 +48,85 @@
     input[type=range] {
       accent-color: #4262b2;
     }
+
+    /* Ratio styling untuk dynamic canvas container */
+    .aspect-instagram {
+      aspect-ratio: 1 / 1;
+      max-width: 530px;
+    }
+
+    .aspect-tiktok {
+      aspect-ratio: 2494 / 3324;
+      max-width: 440px;
+    }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased select-none">
 
+  <!-- Format Selector Modal (Muncul saat pertama kali buka) -->
+  <div id="formatModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition-all duration-300">
+    <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl relative text-center">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#4262b2] to-blue-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-white shadow-xl shadow-blue-500/20">
+        O+
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight mb-1">PILIH FORMAT KANVAS</h2>
+      <p class="text-slate-400 text-xs sm:text-sm mb-6">Pilih format postingan yang ingin dibuat hari ini</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+        <!-- Pilihan 1: Instagram (1:1) -->
+        <button id="selectModalIg" class="group p-5 bg-slate-900/90 hover:bg-slate-800/90 border-2 border-slate-700 hover:border-[#4262b2] rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer hover:shadow-xl hover:shadow-blue-600/20 active:scale-98">
+          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-500 flex items-center justify-center text-white text-3xl mb-3 shadow-md group-hover:scale-105 transition-transform">
+            <i class="ph-bold ph-instagram-logo"></i>
+          </div>
+          <span class="text-base font-black text-white">Instagram Feed</span>
+          <span class="text-xs font-semibold text-blue-400 mt-0.5">1080 x 1080 px</span>
+          <span class="text-[11px] text-slate-400 mt-2 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">Rasio Persegi (1:1)</span>
+        </button>
+
+        <!-- Pilihan 2: TikTok (3:4) -->
+        <button id="selectModalTiktok" class="group p-5 bg-slate-900/90 hover:bg-slate-800/90 border-2 border-slate-700 hover:border-[#4262b2] rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer hover:shadow-xl hover:shadow-blue-600/20 active:scale-98">
+          <div class="w-16 h-20 rounded-xl bg-gradient-to-b from-cyan-400 via-slate-900 to-rose-500 flex items-center justify-center text-white text-3xl mb-3 shadow-md group-hover:scale-105 transition-transform border border-slate-700">
+            <i class="ph-bold ph-tiktok-logo"></i>
+          </div>
+          <span class="text-base font-black text-white">TikTok Photo</span>
+          <span class="text-xs font-semibold text-cyan-400 mt-0.5">2494 x 3324 px</span>
+          <span class="text-[11px] text-slate-400 mt-2 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">Portrait HD (3:4)</span>
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-500 mt-6 italic">Anda dapat mengganti rasio ini kapan saja melalui tombol di navbar atas.</p>
+    </div>
+  </div>
+
   <!-- Header Bar -->
-  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4262b2] to-blue-400 flex items-center justify-center font-black text-lg text-white shadow-lg shadow-blue-500/20">
         O+
       </div>
       <div>
-        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-          OSHITIVE <span class="text-[11px] bg-blue-600/30 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">Auto News Gen</span>
+        <h1 class="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+          OSHITIVE <span class="text-[10px] sm:text-[11px] bg-blue-600/30 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">Auto News Gen</span>
         </h1>
       </div>
     </div>
 
+    <!-- Format Switcher Buttons in Header -->
+    <div class="flex items-center gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+      <button id="btnSwitchIg" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer">
+        <i class="ph-bold ph-instagram-logo"></i>
+        <span>Instagram (1:1)</span>
+      </button>
+      <button id="btnSwitchTiktok" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer">
+        <i class="ph-bold ph-tiktok-logo"></i>
+        <span>TikTok (3:4)</span>
+      </button>
+    </div>
+
     <div class="flex items-center gap-3">
-      <button id="downloadBtn" class="flex items-center gap-2 bg-[#4262b2] hover:bg-blue-600 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer">
+      <button id="downloadBtn" class="flex items-center gap-2 bg-[#4262b2] hover:bg-blue-600 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer">
         <i class="ph-bold ph-download-simple text-base"></i>
-        <span>Download PNG (1080p)</span>
+        <span id="downloadBtnText">Download PNG (1080p)</span>
       </button>
     </div>
   </header>
@@ -220,20 +278,25 @@
     <!-- Preview Canvas (Right: 7 cols) -->
     <div class="lg:col-span-7 flex flex-col items-center order-1 lg:order-2">
       
-      <div class="w-full flex items-center justify-between mb-2 px-1">
-        <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-          <i class="ph-bold ph-eye text-blue-400"></i> Interactive Canvas (Bisa digeser & di-zoom)
-        </span>
+      <div class="w-full flex items-center justify-between mb-2 px-1 max-w-[530px]">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <i class="ph-bold ph-eye text-blue-400"></i> Canvas Preview
+          </span>
+          <span id="canvasFormatBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-950 text-blue-300 border border-blue-800">
+            1080 x 1080 (1:1)
+          </span>
+        </div>
         <button id="resetSampleBtn" class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer">
           <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset Teks
         </button>
       </div>
 
       <!-- Wrapper Preview Responsif -->
-      <div class="w-full max-w-[550px] aspect-square flex items-center justify-center bg-slate-950/80 border border-slate-800 rounded-2xl p-2 sm:p-3 shadow-2xl">
+      <div id="previewCardFrame" class="w-full aspect-instagram flex items-center justify-center bg-slate-950/80 border border-slate-800 rounded-2xl p-2 sm:p-3 shadow-2xl transition-all duration-300">
         
-        <!-- CARD UTAMA PREVIEW (1:1 Ratio) -->
-        <div id="captureArea" class="relative w-full aspect-square overflow-hidden bg-slate-800 shadow-2xl flex flex-col justify-end touch-none select-none">
+        <!-- CARD UTAMA PREVIEW (Ratio diatur dinamis oleh aspect class) -->
+        <div id="captureArea" class="relative w-full h-full overflow-hidden bg-slate-800 shadow-2xl flex flex-col justify-end touch-none select-none">
           
           <!-- Layer 1: Background Canvas / Image Container (Draggable & Zoomable with Corner Handles) -->
           <div id="bgLayerContainer" class="absolute inset-0 z-0 overflow-hidden bg-[#192b52]">
@@ -262,7 +325,7 @@
           </div>
 
           <!-- Layer 2: Gradient Halus Transisi ke Bawah -->
-          <div class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-40% to-[#4262b2] opacity-90"></div>
+          <div id="gradientOverlay" class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-45% to-[#4262b2] opacity-90"></div>
           
           <!-- Layer 2.1: Bagian Solid Biru Bawah (#4262b2) -->
           <div class="absolute bottom-0 left-0 right-0 h-[38%] z-10 pointer-events-none bg-[#4262b2]" id="solidBottomBg"></div>
@@ -305,7 +368,7 @@
                   <h2 id="previewHeadline" 
                       class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
                       style="color: #4262b2; font-size: 24px; letter-spacing: -0.025em; word-break: break-word;">
-                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
+                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR
                   </h2>
                 </div>
               </div>
@@ -351,6 +414,19 @@
   </div>
 
   <script>
+    // State Format Kanvas
+    // 'instagram': 1080x1080 | 'tiktok': 2494x3324
+    let currentFormat = 'instagram';
+
+    const formatModal = document.getElementById('formatModal');
+    const selectModalIg = document.getElementById('selectModalIg');
+    const selectModalTiktok = document.getElementById('selectModalTiktok');
+    const btnSwitchIg = document.getElementById('btnSwitchIg');
+    const btnSwitchTiktok = document.getElementById('btnSwitchTiktok');
+    const previewCardFrame = document.getElementById('previewCardFrame');
+    const canvasFormatBadge = document.getElementById('canvasFormatBadge');
+    const downloadBtnText = document.getElementById('downloadBtnText');
+
     // State Transformasi Gambar Latar
     let imgState = {
       scale: 1.0,
@@ -416,6 +492,60 @@
       setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
     }
 
+    // --- SWITCH KANVAS (INSTAGRAM / TIKTOK) ---
+    function setCanvasFormat(format) {
+      currentFormat = format;
+
+      if (format === 'tiktok') {
+        previewCardFrame.classList.remove('aspect-instagram');
+        previewCardFrame.classList.add('aspect-tiktok');
+        canvasFormatBadge.textContent = '2494 x 3324 (TikTok 3:4)';
+        downloadBtnText.textContent = 'Download TikTok PNG (3.3K)';
+        solidBottomBg.style.height = '28%';
+
+        btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
+        btnSwitchIg.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer";
+      } else {
+        previewCardFrame.classList.remove('aspect-tiktok');
+        previewCardFrame.classList.add('aspect-instagram');
+        canvasFormatBadge.textContent = '1080 x 1080 (1:1)';
+        downloadBtnText.textContent = 'Download PNG (1080p)';
+        solidBottomBg.style.height = '38%';
+
+        btnSwitchIg.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
+        btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer";
+      }
+
+      // Reset posisi gambar agar proporsional di format baru
+      imgState.x = 0;
+      imgState.y = 0;
+      renderImageTransform();
+      updateHeadline();
+    }
+
+    // Modal listeners
+    selectModalIg.addEventListener('click', () => {
+      setCanvasFormat('instagram');
+      formatModal.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => formatModal.style.display = 'none', 300);
+    });
+
+    selectModalTiktok.addEventListener('click', () => {
+      setCanvasFormat('tiktok');
+      formatModal.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => formatModal.style.display = 'none', 300);
+    });
+
+    btnSwitchIg.addEventListener('click', () => {
+      setCanvasFormat('instagram');
+      showToast('Format diubah ke Instagram Feed (1:1)');
+    });
+
+    btnSwitchTiktok.addEventListener('click', () => {
+      setCanvasFormat('tiktok');
+      showToast('Format diubah ke TikTok Photo (2494x3324 px)');
+    });
+
     // --- 1. INTERACTIVE TRANSFORM: DRAG & CORNER RESIZE HANDLES ---
     function renderImageTransform() {
       imageTransformBox.style.transform = `translate(calc(-50% + ${imgState.x}px), calc(-50% + ${imgState.y}px)) scale(${imgState.scale})`;
@@ -442,7 +572,6 @@
         imgState.handle = handle.dataset.handle;
         
         const boxRect = imageTransformBox.getBoundingClientRect();
-        const containerRect = bgLayerContainer.getBoundingClientRect();
         
         // Tentukan titik sudut yang berlawanan (Anchor) yang harus tetap diam terkunci
         if (imgState.handle === 'bottom-right') {
@@ -669,7 +798,7 @@
       creditInput.disabled = false;
       creditInput.value = "Sumber: Twitter/X";
       previewCreditText.textContent = creditInput.value;
-      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari";
+      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR";
       previewHeadline.textContent = headlineInput.value;
       footerCtaInput.value = "Baca berita selengkapnya di oshitive.com";
       previewFooterCta.textContent = footerCtaInput.value;
@@ -682,55 +811,68 @@
       showToast('Teks di-reset ke default');
     });
 
-    // --- 4. EXPORT ENGINE 1080x1080 HIGH RESOLUTION ---
+    // --- 4. EXPORT ENGINE (INSTAGRAM 1080x1080 ATAU TIKTOK 2494x3324) ---
     downloadBtn.addEventListener('click', async () => {
       const originalHtml = downloadBtn.innerHTML;
-      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender 1080p...</span>`;
+      const isTiktok = currentFormat === 'tiktok';
+      
+      const targetW = isTiktok ? 2494 : 1080;
+      const targetH = isTiktok ? 3324 : 1080;
+
+      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender ${isTiktok ? 'TikTok (3.3K)' : '1080p'}...</span>`;
       downloadBtn.disabled = true;
 
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1080;
+        canvas.width = targetW;
+        canvas.height = targetH;
         const ctx = canvas.getContext('2d');
 
         // Pastikan font Poppins sudah siap dirender
         await document.fonts.ready;
 
-        // 1. Gambar Background Foto sesuai Transformasi (Scale & Offset Drag)
         const rect = captureArea.getBoundingClientRect();
-        const scaleFactor = 1080 / rect.width;
+        const scaleFactor = targetW / rect.width;
 
+        // 1. Gambar Background Foto sesuai Transformasi (Scale & Offset Drag)
         ctx.save();
         ctx.fillStyle = '#192b52';
-        ctx.fillRect(0, 0, 1080, 1080);
+        ctx.fillRect(0, 0, targetW, targetH);
 
         if (bgPreviewImg.complete && bgPreviewImg.naturalWidth > 0) {
           ctx.save();
           const imgAspect = bgPreviewImg.naturalWidth / bgPreviewImg.naturalHeight;
-          let drawW = 1080;
-          let drawH = 1080 / imgAspect;
-          if (drawH < 1080) {
-            drawH = 1080;
-            drawW = 1080 * imgAspect;
+          const canvasAspect = targetW / targetH;
+          let drawW, drawH;
+
+          if (imgAspect > canvasAspect) {
+            drawH = targetH;
+            drawW = targetH * imgAspect;
+          } else {
+            drawW = targetW;
+            drawH = targetW / imgAspect;
           }
 
-          ctx.translate(540 + imgState.x * scaleFactor, 540 + imgState.y * scaleFactor);
+          ctx.translate((targetW / 2) + imgState.x * scaleFactor, (targetH / 2) + imgState.y * scaleFactor);
           ctx.scale(imgState.scale, imgState.scale);
           ctx.drawImage(bgPreviewImg, -drawW / 2, -drawH / 2, drawW, drawH);
           ctx.restore();
         }
 
         // 2. Gradient Overlay & Solid Base
-        const grad = ctx.createLinearGradient(0, 360, 0, 720);
+        const gradYStart = isTiktok ? targetH * 0.45 : targetH * 0.35;
+        const gradYEnd = isTiktok ? targetH * 0.72 : targetH * 0.70;
+        const solidHeight = isTiktok ? targetH * 0.28 : targetH * 0.38;
+
+        const grad = ctx.createLinearGradient(0, gradYStart, 0, gradYEnd);
         grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
         grad.addColorStop(1, '#4262b2');
         ctx.fillStyle = grad;
-        ctx.fillRect(0, 360, 1080, 360);
+        ctx.fillRect(0, gradYStart, targetW, gradYEnd - gradYStart);
 
         // Solid Bottom
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
-        ctx.fillRect(0, 700, 1080, 380);
+        ctx.fillRect(0, targetH - solidHeight, targetW, solidHeight);
 
         // 3. Hitung Ukuran Teks dan Tinggi Dinamis Kotak Putih secara Presisi
         const computedFontPx = parseFloat(window.getComputedStyle(previewHeadline).fontSize);
@@ -741,8 +883,10 @@
         const words = (headlineInput.value || '').split(' ');
         const lines = [];
         let currentLine = '';
-        const boxW = 940;
-        const maxTextWidth = boxW - 80;
+        
+        const boxMarginX = Math.round(targetW * 0.065);
+        const boxW = targetW - (boxMarginX * 2);
+        const maxTextWidth = boxW - (isTiktok ? 150 : 80);
 
         for (let i = 0; i < words.length; i++) {
           const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
@@ -758,56 +902,65 @@
 
         // Hitung tinggi kotak putih dinamis berdasarkan jumlah baris teks
         const textBlockHeight = lines.length * lineHeight;
-        const boxPaddingVertical = 36 * scaleFactor;
-        const boxH = Math.max(textBlockHeight + boxPaddingVertical, 120);
+        const boxPaddingVertical = (isTiktok ? 70 : 36) * scaleFactor;
+        const boxH = Math.max(textBlockHeight + boxPaddingVertical, isTiktok ? 240 : 120);
 
-        // Posisi Y bawah kotak dipatok tetap di atas footer (footer area di Y: 1000)
-        const boxBottomY = 985;
+        // Posisi Y bawah kotak dipatok tepat di atas footer
+        const footerY = isTiktok ? targetH - 150 : 1000;
+        const boxBottomY = footerY - (isTiktok ? 70 : 25);
         const boxY = boxBottomY - boxH;
-        const boxX = 70;
+        const boxX = boxMarginX;
 
         // 4. Render Tag Badge (Kiri) & Credit Badge (Kanan) DINAMIS MENGIKUTI POSISI ATAS KOTAK
         const tagText = (tagInput.value || 'JKT48').toUpperCase();
-        ctx.font = 'bold 26px Poppins, sans-serif';
+        const tagFontSize = Math.round(isTiktok ? 56 : 26);
+        ctx.font = `bold ${tagFontSize}px Poppins, sans-serif`;
         const tagMetrics = ctx.measureText(tagText);
-        const tagWidth = tagMetrics.width + 42;
-        const tagHeight = 44;
+        const tagPaddingX = isTiktok ? 70 : 42;
+        const tagWidth = tagMetrics.width + tagPaddingX;
+        const tagHeight = isTiktok ? 96 : 44;
+        const tagRadius = isTiktok ? 16 : 10;
+        const tagY = boxY - tagHeight - (isTiktok ? 24 : 12);
         const tagX = boxX;
-        const tagY = boxY - tagHeight - 12; // Menempel persis di atas kotak
 
         // Badge Tag Kiri
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.roundRect(tagX, tagY, tagWidth, tagHeight, 10);
+        ctx.roundRect(tagX, tagY, tagWidth, tagHeight, tagRadius);
         ctx.fill();
 
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
-        ctx.fillText(tagText, tagX + 21, tagY + 31);
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.fillText(tagText, tagX + (tagPaddingX / 2), tagY + (tagHeight / 2) + 2);
 
         // Credit Badge Kanan (sejajar horizontal dengan Tag)
         if (toggleCredit.checked) {
           const creditStr = (creditInput.value || 'Sumber: Twitter/X').toUpperCase();
-          ctx.font = '700 20px Poppins, sans-serif';
+          const creditFontSize = Math.round(isTiktok ? 42 : 20);
+          ctx.font = `700 ${creditFontSize}px Poppins, sans-serif`;
           const creditMetrics = ctx.measureText(creditStr);
-          const creditW = creditMetrics.width + 36;
-          const creditH = 42;
+          const creditPaddingX = isTiktok ? 60 : 36;
+          const creditW = creditMetrics.width + creditPaddingX;
+          const creditH = isTiktok ? 90 : 42;
           const creditX = (boxX + boxW) - creditW;
-          const creditY = tagY + 1;
+          const creditY = tagY + (tagHeight - creditH) / 2;
 
           ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
           ctx.beginPath();
-          ctx.roundRect(creditX, creditY, creditW, creditH, 8);
+          ctx.roundRect(creditX, creditY, creditW, creditH, tagRadius);
           ctx.fill();
 
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = isTiktok ? 3 : 1.5;
           ctx.stroke();
 
           ctx.fillStyle = '#ffffff';
-          ctx.fillText(creditStr, creditX + 18, creditY + 28);
+          ctx.fillText(creditStr, creditX + (creditPaddingX / 2), creditY + (creditH / 2) + 2);
         }
 
         // 5. Render Kotak Putih Dinamis (Watermark Pattern + Border)
+        ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#f8fafd';
         ctx.fillRect(boxX, boxY, boxW, boxH);
 
@@ -818,14 +971,21 @@
         ctx.clip();
         ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
 
-        const shards = [
-          [[70, boxBottomY], [200, boxY], [300, boxBottomY]],
-          [[270, boxBottomY], [420, boxY], [540, boxBottomY]],
-          [[500, boxBottomY], [680, boxY], [800, boxBottomY]],
-          [[760, boxBottomY], [920, boxY], [1010, boxBottomY]],
-          [[0, boxY + boxH * 0.5], [160, boxY], [240, boxBottomY]]
-        ];
-        shards.forEach(poly => {
+        const shardCoords = isTiktok 
+          ? [
+              [[boxX, boxBottomY], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxBottomY]],
+              [[boxX + boxW * 0.3, boxBottomY], [boxX + boxW * 0.5, boxY], [boxX + boxW * 0.65, boxBottomY]],
+              [[boxX + boxW * 0.6, boxBottomY], [boxX + boxW * 0.8, boxY], [boxX + boxW * 0.95, boxBottomY]]
+            ]
+          : [
+              [[70, boxBottomY], [200, boxY], [300, boxBottomY]],
+              [[270, boxBottomY], [420, boxY], [540, boxBottomY]],
+              [[500, boxBottomY], [680, boxY], [800, boxBottomY]],
+              [[760, boxBottomY], [920, boxY], [1010, boxBottomY]],
+              [[0, boxY + boxH * 0.5], [160, boxY], [240, boxBottomY]]
+            ];
+
+        shardCoords.forEach(poly => {
           ctx.beginPath();
           ctx.moveTo(poly[0][0], poly[0][1]);
           ctx.lineTo(poly[1][0], poly[1][1]);
@@ -837,7 +997,7 @@
 
         // Border Kotak Caption
         ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = isTiktok ? 5 : 2.5;
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
         // 6. Render Teks Headline di dalam Kotak Dinamis
@@ -846,7 +1006,8 @@
         ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
 
         const startTextY = boxY + (boxH - textBlockHeight) / 2 + (highResFontSize * 0.86);
-        const textX = textAlignSelect.value === 'center' ? boxX + boxW / 2 : boxX + 40;
+        const textPadding = isTiktok ? 70 : 40;
+        const textX = textAlignSelect.value === 'center' ? boxX + boxW / 2 : boxX + textPadding;
 
         lines.forEach((line, index) => {
           ctx.fillText(line, textX, startTextY + (index * lineHeight));
@@ -855,37 +1016,44 @@
         // 7. Render Footer
         ctx.textAlign = 'left';
         ctx.fillStyle = '#ffffff';
-        ctx.font = '900 24px Poppins, sans-serif';
+        const brandFontSize = Math.round(isTiktok ? 52 : 24);
+        ctx.font = `900 ${brandFontSize}px Poppins, sans-serif`;
         const brandText = 'OSHITIVE+';
-        ctx.fillText(brandText, boxX, 1025);
+        const footerBaselineY = isTiktok ? targetH - 120 : 1025;
+        
+        ctx.fillText(brandText, boxX, footerBaselineY);
         const brandW = ctx.measureText(brandText).width;
 
-        ctx.font = '700 21px Poppins, sans-serif';
+        const ctaFontSize = Math.round(isTiktok ? 45 : 21);
+        ctx.font = `700 ${ctaFontSize}px Poppins, sans-serif`;
         const ctaText = footerCtaInput.value || 'Baca berita selengkapnya di oshitive.com';
         const ctaW = ctx.measureText(ctaText).width;
         const ctaX = (boxX + boxW) - ctaW;
-        ctx.fillText(ctaText, ctaX, 1025);
+        ctx.fillText(ctaText, ctaX, footerBaselineY);
 
         // Garis penghubung titik footer
-        const lineStartX = boxX + brandW + 24;
-        const lineEndX = ctaX - 24;
-        const lineY = 1017;
+        const lineSpacing = isTiktok ? 40 : 24;
+        const lineStartX = boxX + brandW + lineSpacing;
+        const lineEndX = ctaX - lineSpacing;
+        const lineY = footerBaselineY - (isTiktok ? 16 : 8);
 
         if (lineEndX > lineStartX + 30) {
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 3;
+          ctx.lineWidth = isTiktok ? 6 : 3;
+
+          const dotRadius = isTiktok ? 10 : 5;
 
           ctx.beginPath();
-          ctx.arc(lineStartX, lineY, 5, 0, Math.PI * 2);
+          ctx.arc(lineStartX, lineY, dotRadius, 0, Math.PI * 2);
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.moveTo(lineStartX + 6, lineY);
-          ctx.lineTo(lineEndX - 6, lineY);
+          ctx.moveTo(lineStartX + dotRadius + 2, lineY);
+          ctx.lineTo(lineEndX - dotRadius - 2, lineY);
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.arc(lineEndX, lineY, 5, 0, Math.PI * 2);
+          ctx.arc(lineEndX, lineY, dotRadius, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -893,11 +1061,12 @@
         const dataUrl = canvas.toDataURL('image/png', 1.0);
         const downloadLink = document.createElement('a');
         const cleanTag = tagInput.value.replace(/[^a-zA-Z0-9]/g, '_') || 'oshitive';
-        downloadLink.download = `oshitive_${cleanTag}_${Date.now()}.png`;
+        const formatLabel = isTiktok ? 'tiktok_2494x3324' : 'instagram_1080x1080';
+        downloadLink.download = `oshitive_${cleanTag}_${formatLabel}_${Date.now()}.png`;
         downloadLink.href = dataUrl;
         downloadLink.click();
 
-        showToast("Gambar 1080p berhasil di-download!");
+        showToast(`Gambar ${isTiktok ? 'TikTok 3.3K' : 'Instagram 1080p'} berhasil di-download!`);
       } catch (err) {
         console.error(err);
         showToast("Gagal merender gambar.");
