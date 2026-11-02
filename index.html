@@ -152,9 +152,9 @@
           <!-- File Drop/Upload Area -->
           <div class="grid grid-cols-2 gap-2">
             <label class="border-2 border-dashed border-slate-700 hover:border-[#4262b2] rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-900/50 hover:bg-slate-800/40 transition-colors group">
-              <input type="file" id="imageInput" accept="image/*" class="hidden">
+              <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
               <i class="ph-bold ph-upload-simple text-xl text-slate-400 group-hover:text-blue-400 mb-0.5 transition-colors"></i>
-              <span class="text-[11px] font-semibold text-slate-300 group-hover:text-white">Pilih File Foto</span>
+              <span class="text-[11px] font-semibold text-slate-300 group-hover:text-white" id="uploadLabelText">Pilih Foto / Video</span>
             </label>
 
             <!-- URL Input -->
@@ -164,6 +164,36 @@
                 <input type="text" id="imageUrlInput" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
                 <button id="applyUrlBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-bold"><i class="ph-bold ph-arrow-right"></i></button>
               </div>
+            </div>
+          </div>
+
+          <!-- Video Playback & Auto Fade Controls (Muncul saat video dimuat) -->
+          <div id="videoControlsPanel" class="hidden bg-slate-900/90 border border-blue-900/60 rounded-xl p-3 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                <i class="ph-bold ph-video text-base"></i> Kontrol Media Video
+              </span>
+              <span id="videoTimeDisplay" class="font-mono text-[11px] text-slate-400 font-semibold">00:00 / 00:00</span>
+            </div>
+
+            <!-- Video playback scrub slider -->
+            <input type="range" id="videoTimeline" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+
+            <div class="flex items-center justify-between pt-1">
+              <div class="flex items-center gap-2">
+                <button id="btnPlayPause" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="ph-bold ph-play" id="playIcon"></i> Play
+                </button>
+                <button id="btnMuteVideo" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs cursor-pointer">
+                  <i class="ph-bold ph-speaker-high" id="muteIcon"></i>
+                </button>
+              </div>
+
+              <!-- Auto-Fade at 5s Setting -->
+              <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 text-[11px]">
+                <input type="checkbox" id="toggleAutoFade" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                <span class="font-medium text-slate-300">Hilang pada detik ke-<span class="text-blue-400 font-bold">5</span></span>
+              </label>
             </div>
           </div>
 
@@ -298,9 +328,9 @@
         <!-- CARD UTAMA PREVIEW (Ratio diatur dinamis oleh aspect class) -->
         <div id="captureArea" class="relative w-full h-full overflow-hidden bg-slate-800 shadow-2xl flex flex-col justify-end touch-none select-none">
           
-          <!-- Layer 1: Background Canvas / Image Container (Draggable & Zoomable with Corner Handles) -->
+          <!-- Layer 1: Background Canvas / Image & Video Container (Draggable & Zoomable with Corner Handles) -->
           <div id="bgLayerContainer" class="absolute inset-0 z-0 overflow-hidden bg-[#192b52]">
-            <!-- Bounding Box Wrapper for image + interactive corner transform handles -->
+            <!-- Bounding Box Wrapper for image/video + interactive corner transform handles -->
             <div id="imageTransformBox" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-move origin-center group touch-none" style="width: 100%; height: 100%;">
               <img id="bgPreviewImg" 
                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80" 
@@ -308,10 +338,18 @@
                    draggable="false"
                    class="w-full h-full object-cover select-none pointer-events-none">
               
+              <!-- Video Element (Hidden by default until video selected) -->
+              <video id="bgPreviewVideo" 
+                     playsinline 
+                     muted 
+                     loop 
+                     crossorigin="anonymous"
+                     class="hidden w-full h-full object-cover select-none pointer-events-none"></video>
+
               <!-- Active Bounding Border Indicator -->
               <div id="transformBorder" class="absolute inset-0 border-2 border-dashed border-blue-400/80 group-hover:border-blue-400 pointer-events-none transition-opacity duration-150"></div>
 
-              <!-- 4 Corner Resize Handles (Tarikan Ujung Gambar) -->
+              <!-- 4 Corner Resize Handles (Tarikan Ujung Gambar/Video) -->
               <div class="corner-handle absolute -top-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nwse-resize hover:scale-125 transition-transform z-30" data-handle="top-left"></div>
               <div class="corner-handle absolute -top-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="top-right"></div>
               <div class="corner-handle absolute -bottom-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="bottom-left"></div>
@@ -325,13 +363,14 @@
           </div>
 
           <!-- Layer 2: Gradient Halus Transisi ke Bawah -->
-          <div id="gradientOverlay" class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-45% to-[#4262b2] opacity-90"></div>
+          <div id="gradientOverlay" class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-45% to-[#4262b2] opacity-90 transition-opacity duration-700"></div>
           
           <!-- Layer 2.1: Bagian Solid Biru Bawah (#4262b2) -->
-          <div class="absolute bottom-0 left-0 right-0 h-[38%] z-10 pointer-events-none bg-[#4262b2]" id="solidBottomBg"></div>
+          <div class="absolute bottom-0 left-0 right-0 h-[38%] z-10 pointer-events-none bg-[#4262b2] transition-opacity duration-700" id="solidBottomBg"></div>
 
           <!-- Layer 3: Konten Box Berita & Footer (Bottom-anchored dynamic stack) -->
-          <div class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none">
+          <!-- Disertakan ID newsOverlayGroup agar otomatis fade out pada detik ke-5 jika mode video -->
+          <div id="newsOverlayGroup" class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none transition-opacity duration-700">
             
             <!-- Dynamic Floating Group: Meta Badges + Caption Box (Menempel dan tumbuh ke atas dari footer) -->
             <div class="w-full flex flex-col justify-end pointer-events-auto">
@@ -417,6 +456,8 @@
     // State Format Kanvas
     // 'instagram': 1080x1080 | 'tiktok': 2494x3324
     let currentFormat = 'instagram';
+    let mediaType = 'image'; // 'image' | 'video'
+    let isVideoFaded = false;
 
     const formatModal = document.getElementById('formatModal');
     const selectModalIg = document.getElementById('selectModalIg');
@@ -427,7 +468,22 @@
     const canvasFormatBadge = document.getElementById('canvasFormatBadge');
     const downloadBtnText = document.getElementById('downloadBtnText');
 
-    // State Transformasi Gambar Latar
+    // Video Control Elements
+    const mediaInput = document.getElementById('mediaInput');
+    const uploadLabelText = document.getElementById('uploadLabelText');
+    const bgPreviewVideo = document.getElementById('bgPreviewVideo');
+    const videoControlsPanel = document.getElementById('videoControlsPanel');
+    const videoTimeline = document.getElementById('videoTimeline');
+    const videoTimeDisplay = document.getElementById('videoTimeDisplay');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const btnMuteVideo = document.getElementById('btnMuteVideo');
+    const muteIcon = document.getElementById('muteIcon');
+    const toggleAutoFade = document.getElementById('toggleAutoFade');
+    const newsOverlayGroup = document.getElementById('newsOverlayGroup');
+    const gradientOverlay = document.getElementById('gradientOverlay');
+
+    // State Transformasi Gambar/Video Latar
     let imgState = {
       scale: 1.0,
       x: 0,
@@ -452,7 +508,6 @@
     const transformBorder = document.getElementById('transformBorder');
     const cornerHandles = document.querySelectorAll('.corner-handle');
 
-    const imageInput = document.getElementById('imageInput');
     const imageUrlInput = document.getElementById('imageUrlInput');
     const applyUrlBtn = document.getElementById('applyUrlBtn');
     const zoomInput = document.getElementById('zoomInput');
@@ -500,7 +555,7 @@
         previewCardFrame.classList.remove('aspect-instagram');
         previewCardFrame.classList.add('aspect-tiktok');
         canvasFormatBadge.textContent = '2494 x 3324 (TikTok 3:4)';
-        downloadBtnText.textContent = 'Download TikTok PNG (3.3K)';
+        downloadBtnText.textContent = mediaType === 'video' ? 'Download Video (MP4/WebM)' : 'Download TikTok PNG (3.3K)';
         solidBottomBg.style.height = '28%';
 
         btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
@@ -509,14 +564,13 @@
         previewCardFrame.classList.remove('aspect-tiktok');
         previewCardFrame.classList.add('aspect-instagram');
         canvasFormatBadge.textContent = '1080 x 1080 (1:1)';
-        downloadBtnText.textContent = 'Download PNG (1080p)';
+        downloadBtnText.textContent = mediaType === 'video' ? 'Download Video (MP4/WebM)' : 'Download PNG (1080p)';
         solidBottomBg.style.height = '38%';
 
         btnSwitchIg.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
         btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer";
       }
 
-      // Reset posisi gambar agar proporsional di format baru
       imgState.x = 0;
       imgState.y = 0;
       renderImageTransform();
@@ -546,18 +600,160 @@
       showToast('Format diubah ke TikTok Photo (2494x3324 px)');
     });
 
-    // --- 1. INTERACTIVE TRANSFORM: DRAG & CORNER RESIZE HANDLES ---
+    // --- 1. MEDIA INPUT: DUKUNGAN FOTO & VIDEO ---
+    function formatSeconds(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    mediaInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fileUrl = URL.createObjectURL(file);
+      if (file.type.startsWith('video/')) {
+        setupVideoMedia(fileUrl, file.name);
+      } else {
+        setupImageMedia(fileUrl);
+      }
+    });
+
+    function setupImageMedia(src) {
+      mediaType = 'image';
+      bgPreviewVideo.pause();
+      bgPreviewVideo.classList.add('hidden');
+      bgPreviewImg.classList.remove('hidden');
+      videoControlsPanel.classList.add('hidden');
+      bgPreviewImg.src = src;
+
+      // Kembalikan visibilitas caption
+      newsOverlayGroup.style.opacity = '1';
+      gradientOverlay.style.opacity = '0.9';
+      solidBottomBg.style.opacity = '1';
+
+      uploadLabelText.textContent = 'Ganti Media';
+      downloadBtnText.textContent = currentFormat === 'tiktok' ? 'Download TikTok PNG (3.3K)' : 'Download PNG (1080p)';
+      
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Foto berhasil dimuat!');
+    }
+
+    function setupVideoMedia(src, name) {
+      mediaType = 'video';
+      bgPreviewImg.classList.add('hidden');
+      bgPreviewVideo.classList.remove('hidden');
+      videoControlsPanel.classList.remove('hidden');
+      
+      bgPreviewVideo.src = src;
+      bgPreviewVideo.load();
+
+      uploadLabelText.textContent = name ? name.substring(0, 14) + '...' : 'Ganti Video';
+      downloadBtnText.textContent = 'Download Video (MP4/WebM)';
+
+      bgPreviewVideo.onloadedmetadata = () => {
+        videoTimeline.max = bgPreviewVideo.duration || 10;
+        videoTimeDisplay.textContent = `00:00 / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+        bgPreviewVideo.play();
+        playIcon.className = "ph-bold ph-pause";
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
+      };
+
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Video aktif! Caption otomatis memudar di detik ke-5.');
+    }
+
+    // Video playback & auto fade engine pada detik ke-5
+    bgPreviewVideo.addEventListener('timeupdate', () => {
+      const cur = bgPreviewVideo.currentTime;
+      videoTimeline.value = cur;
+      videoTimeDisplay.textContent = `${formatSeconds(cur)} / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+
+      if (toggleAutoFade.checked && mediaType === 'video') {
+        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s)
+        if (cur >= 5.0) {
+          if (!isVideoFaded) {
+            newsOverlayGroup.style.opacity = '0';
+            gradientOverlay.style.opacity = '0';
+            solidBottomBg.style.opacity = '0';
+            isVideoFaded = true;
+          }
+        } else {
+          if (isVideoFaded) {
+            newsOverlayGroup.style.opacity = '1';
+            gradientOverlay.style.opacity = '0.9';
+            solidBottomBg.style.opacity = '1';
+            isVideoFaded = false;
+          }
+        }
+      } else {
+        // Jika auto fade nonaktif, pastikan selalu terlihat
+        newsOverlayGroup.style.opacity = '1';
+        gradientOverlay.style.opacity = '0.9';
+        solidBottomBg.style.opacity = '1';
+      }
+    });
+
+    videoTimeline.addEventListener('input', (e) => {
+      if (bgPreviewVideo.duration) {
+        bgPreviewVideo.currentTime = parseFloat(e.target.value);
+      }
+    });
+
+    btnPlayPause.addEventListener('click', () => {
+      if (bgPreviewVideo.paused) {
+        bgPreviewVideo.play();
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
+      } else {
+        bgPreviewVideo.pause();
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-play" id="playIcon"></i> Play';
+      }
+    });
+
+    btnMuteVideo.addEventListener('click', () => {
+      bgPreviewVideo.muted = !bgPreviewVideo.muted;
+      if (bgPreviewVideo.muted) {
+        muteIcon.className = "ph-bold ph-speaker-slash";
+      } else {
+        muteIcon.className = "ph-bold ph-speaker-high";
+      }
+    });
+
+    toggleAutoFade.addEventListener('change', () => {
+      if (!toggleAutoFade.checked) {
+        newsOverlayGroup.style.opacity = '1';
+        gradientOverlay.style.opacity = '0.9';
+        solidBottomBg.style.opacity = '1';
+      }
+    });
+
+    applyUrlBtn.addEventListener('click', () => {
+      const url = imageUrlInput.value.trim();
+      if (!url) return;
+
+      if (url.match(/\.(mp4|webm|mov)(\?.*)?$/i)) {
+        setupVideoMedia(url, 'video_url');
+      } else {
+        setupImageMedia(url);
+      }
+    });
+
+    // --- 2. INTERACTIVE TRANSFORM: DRAG & CORNER RESIZE HANDLES ---
     function renderImageTransform() {
       imageTransformBox.style.transform = `translate(calc(-50% + ${imgState.x}px), calc(-50% + ${imgState.y}px)) scale(${imgState.scale})`;
       zoomVal.textContent = Math.round(imgState.scale * 100) + '%';
       zoomInput.value = Math.round(imgState.scale * 100);
     }
 
-    // Dragging the main image body
+    // Dragging the main image/video body
     imageTransformBox.addEventListener('pointerdown', (e) => {
-      // Jika yang ditekan adalah corner handle, abaikan handler drag body
       if (e.target.classList.contains('corner-handle')) return;
-
       imgState.mode = 'drag';
       imgState.startX = e.clientX - imgState.x;
       imgState.startY = e.clientY - imgState.y;
@@ -573,7 +769,6 @@
         
         const boxRect = imageTransformBox.getBoundingClientRect();
         
-        // Tentukan titik sudut yang berlawanan (Anchor) yang harus tetap diam terkunci
         if (imgState.handle === 'bottom-right') {
           imgState.anchorX = boxRect.left;
           imgState.anchorY = boxRect.top;
@@ -604,12 +799,10 @@
           const ratio = currentDist / imgState.initialDist;
           const newScale = Math.min(Math.max(imgState.initialScale * ratio, 0.2), 4.0);
           
-          // Hitung perubahan ukuran
           const actualRatio = newScale / imgState.initialScale;
           const newW = imgState.initialW * actualRatio;
           const newH = imgState.initialH * actualRatio;
 
-          // Hitung pusat baru agar sudut tumpu (anchor) tidak bergerak sama sekali
           let newCenterX = 0;
           let newCenterY = 0;
 
@@ -653,7 +846,6 @@
       });
     });
 
-    // Pointer Move & Up untuk Image Dragging
     imageTransformBox.addEventListener('pointermove', (e) => {
       if (imgState.mode === 'drag') {
         imgState.x = e.clientX - imgState.startX;
@@ -676,7 +868,6 @@
       }
     });
 
-    // Zoom via Mouse Wheel di atas container
     bgLayerContainer.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomStep = e.deltaY < 0 ? 0.08 : -0.08;
@@ -684,52 +875,20 @@
       renderImageTransform();
     }, { passive: false });
 
-    // Zoom via Slider
     zoomInput.addEventListener('input', (e) => {
       imgState.scale = parseFloat(e.target.value) / 100;
       renderImageTransform();
     });
 
-    // Reset Posisi & Zoom
     resetTransformBtn.addEventListener('click', () => {
       imgState.x = 0;
       imgState.y = 0;
       imgState.scale = 1.0;
       renderImageTransform();
-      showToast('Posisi & ukuran gambar di-reset');
+      showToast('Posisi & ukuran di-reset');
     });
 
-    // Ganti Gambar Latar
-    imageInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          bgPreviewImg.src = event.target.result;
-          imgState.x = 0;
-          imgState.y = 0;
-          imgState.scale = 1.0;
-          renderImageTransform();
-          showToast('Gambar baru diterapkan!');
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    applyUrlBtn.addEventListener('click', () => {
-      const url = imageUrlInput.value.trim();
-      if (url) {
-        bgPreviewImg.crossOrigin = "anonymous";
-        bgPreviewImg.src = url;
-        imgState.x = 0;
-        imgState.y = 0;
-        imgState.scale = 1.0;
-        renderImageTransform();
-        showToast('Gambar dari URL dimuat!');
-      }
-    });
-
-    // --- 2. ENGINE DYNAMIC HEIGHT CAPTION & SYNC ---
+    // --- 3. ENGINE DYNAMIC HEIGHT CAPTION & SYNCS ---
     function updateHeadline() {
       previewHeadline.textContent = headlineInput.value || 'Ketik Judul Berita Di Sini';
       previewHeadline.style.fontSize = `${manualFontSizeInput.value}px`;
@@ -750,12 +909,10 @@
       previewHeadline.style.textAlign = e.target.value;
     });
 
-    // --- 3. TAG & FOOTER SYNCS ---
     tagInput.addEventListener('input', () => {
       previewTag.textContent = tagInput.value || 'TAG';
     });
 
-    // Credit / Sumber sync & toggle
     creditInput.addEventListener('input', () => {
       previewCreditText.textContent = creditInput.value || 'Sumber: Twitter/X';
     });
@@ -789,7 +946,6 @@
       previewFooterCta.textContent = footerCtaInput.value;
     });
 
-    // Reset Teks
     resetSampleBtn.addEventListener('click', () => {
       tagInput.value = "JKT48";
       previewTag.textContent = "JKT48";
@@ -811,55 +967,45 @@
       showToast('Teks di-reset ke default');
     });
 
-    // --- 4. EXPORT ENGINE (INSTAGRAM 1080x1080 ATAU TIKTOK 2494x3324) ---
-    downloadBtn.addEventListener('click', async () => {
-      const originalHtml = downloadBtn.innerHTML;
-      const isTiktok = currentFormat === 'tiktok';
-      
-      const targetW = isTiktok ? 2494 : 1080;
-      const targetH = isTiktok ? 3324 : 1080;
+    // --- 4. RENDER FRAME KE CANVAS DENGAN KONTROL OPACITY (UNTUK FOTO MAUPUN VIDEO) ---
+    function renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity = 1.0) {
+      const rect = captureArea.getBoundingClientRect();
+      const scaleFactor = targetW / rect.width;
 
-      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender ${isTiktok ? 'TikTok (3.3K)' : '1080p'}...</span>`;
-      downloadBtn.disabled = true;
+      ctx.save();
+      ctx.fillStyle = '#192b52';
+      ctx.fillRect(0, 0, targetW, targetH);
 
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext('2d');
+      // Gambar Media Latar (Foto atau Video)
+      const currentMedia = mediaType === 'video' ? bgPreviewVideo : bgPreviewImg;
+      const mediaW = mediaType === 'video' ? bgPreviewVideo.videoWidth : bgPreviewImg.naturalWidth;
+      const mediaH = mediaType === 'video' ? bgPreviewVideo.videoHeight : bgPreviewImg.naturalHeight;
 
-        // Pastikan font Poppins sudah siap dirender
-        await document.fonts.ready;
-
-        const rect = captureArea.getBoundingClientRect();
-        const scaleFactor = targetW / rect.width;
-
-        // 1. Gambar Background Foto sesuai Transformasi (Scale & Offset Drag)
+      if (mediaW > 0 && mediaH > 0) {
         ctx.save();
-        ctx.fillStyle = '#192b52';
-        ctx.fillRect(0, 0, targetW, targetH);
+        const mediaAspect = mediaW / mediaH;
+        const canvasAspect = targetW / targetH;
+        let drawW, drawH;
 
-        if (bgPreviewImg.complete && bgPreviewImg.naturalWidth > 0) {
-          ctx.save();
-          const imgAspect = bgPreviewImg.naturalWidth / bgPreviewImg.naturalHeight;
-          const canvasAspect = targetW / targetH;
-          let drawW, drawH;
-
-          if (imgAspect > canvasAspect) {
-            drawH = targetH;
-            drawW = targetH * imgAspect;
-          } else {
-            drawW = targetW;
-            drawH = targetW / imgAspect;
-          }
-
-          ctx.translate((targetW / 2) + imgState.x * scaleFactor, (targetH / 2) + imgState.y * scaleFactor);
-          ctx.scale(imgState.scale, imgState.scale);
-          ctx.drawImage(bgPreviewImg, -drawW / 2, -drawH / 2, drawW, drawH);
-          ctx.restore();
+        if (mediaAspect > canvasAspect) {
+          drawH = targetH;
+          drawW = targetH * mediaAspect;
+        } else {
+          drawW = targetW;
+          drawH = targetW / mediaAspect;
         }
 
-        // 2. Gradient Overlay & Solid Base
+        ctx.translate((targetW / 2) + imgState.x * scaleFactor, (targetH / 2) + imgState.y * scaleFactor);
+        ctx.scale(imgState.scale, imgState.scale);
+        ctx.drawImage(currentMedia, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+      }
+
+      // Jika overlay opacity > 0, gambar gradien dan kotak caption
+      if (overlayOpacity > 0.001) {
+        ctx.save();
+        ctx.globalAlpha = overlayOpacity;
+
         const gradYStart = isTiktok ? targetH * 0.45 : targetH * 0.35;
         const gradYEnd = isTiktok ? targetH * 0.72 : targetH * 0.70;
         const solidHeight = isTiktok ? targetH * 0.28 : targetH * 0.38;
@@ -870,11 +1016,10 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, gradYStart, targetW, gradYEnd - gradYStart);
 
-        // Solid Bottom
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
         ctx.fillRect(0, targetH - solidHeight, targetW, solidHeight);
 
-        // 3. Hitung Ukuran Teks dan Tinggi Dinamis Kotak Putih secara Presisi
+        // Hitung Teks & Dimensi Kotak
         const computedFontPx = parseFloat(window.getComputedStyle(previewHeadline).fontSize);
         const highResFontSize = Math.round(computedFontPx * scaleFactor);
         const lineHeight = highResFontSize * parseFloat(lineHeightSelect.value);
@@ -900,18 +1045,16 @@
         }
         lines.push(currentLine);
 
-        // Hitung tinggi kotak putih dinamis berdasarkan jumlah baris teks
         const textBlockHeight = lines.length * lineHeight;
         const boxPaddingVertical = (isTiktok ? 70 : 36) * scaleFactor;
         const boxH = Math.max(textBlockHeight + boxPaddingVertical, isTiktok ? 240 : 120);
 
-        // Posisi Y bawah kotak dipatok tepat di atas footer
         const footerY = isTiktok ? targetH - 150 : 1000;
         const boxBottomY = footerY - (isTiktok ? 70 : 25);
         const boxY = boxBottomY - boxH;
         const boxX = boxMarginX;
 
-        // 4. Render Tag Badge (Kiri) & Credit Badge (Kanan) DINAMIS MENGIKUTI POSISI ATAS KOTAK
+        // Render Tag Badge
         const tagText = (tagInput.value || 'JKT48').toUpperCase();
         const tagFontSize = Math.round(isTiktok ? 56 : 26);
         ctx.font = `bold ${tagFontSize}px Poppins, sans-serif`;
@@ -923,7 +1066,6 @@
         const tagY = boxY - tagHeight - (isTiktok ? 24 : 12);
         const tagX = boxX;
 
-        // Badge Tag Kiri
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.roundRect(tagX, tagY, tagWidth, tagHeight, tagRadius);
@@ -934,7 +1076,7 @@
         ctx.textAlign = 'left';
         ctx.fillText(tagText, tagX + (tagPaddingX / 2), tagY + (tagHeight / 2) + 2);
 
-        // Credit Badge Kanan (sejajar horizontal dengan Tag)
+        // Render Credit Badge
         if (toggleCredit.checked) {
           const creditStr = (creditInput.value || 'Sumber: Twitter/X').toUpperCase();
           const creditFontSize = Math.round(isTiktok ? 42 : 20);
@@ -959,12 +1101,12 @@
           ctx.fillText(creditStr, creditX + (creditPaddingX / 2), creditY + (creditH / 2) + 2);
         }
 
-        // 5. Render Kotak Putih Dinamis (Watermark Pattern + Border)
+        // Render Kotak Putih Dinamis
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#f8fafd';
         ctx.fillRect(boxX, boxY, boxW, boxH);
 
-        // Watermark polygons di dalam kotak
+        // Watermark polygons
         ctx.save();
         ctx.beginPath();
         ctx.rect(boxX, boxY, boxW, boxH);
@@ -1000,7 +1142,7 @@
         ctx.lineWidth = isTiktok ? 5 : 2.5;
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-        // 6. Render Teks Headline di dalam Kotak Dinamis
+        // Render Teks Headline
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
         ctx.font = `900 ${highResFontSize}px Poppins, sans-serif`;
         ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
@@ -1013,7 +1155,7 @@
           ctx.fillText(line, textX, startTextY + (index * lineHeight));
         });
 
-        // 7. Render Footer
+        // Render Footer
         ctx.textAlign = 'left';
         ctx.fillStyle = '#ffffff';
         const brandFontSize = Math.round(isTiktok ? 52 : 24);
@@ -1031,7 +1173,6 @@
         const ctaX = (boxX + boxW) - ctaW;
         ctx.fillText(ctaText, ctaX, footerBaselineY);
 
-        // Garis penghubung titik footer
         const lineSpacing = isTiktok ? 40 : 24;
         const lineStartX = boxX + brandW + lineSpacing;
         const lineEndX = ctaX - lineSpacing;
@@ -1057,7 +1198,120 @@
           ctx.stroke();
         }
 
-        // Trigger Download
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // --- 5. EXPORT ENGINE: GAMBAR PNG ATAU VIDEO MP4/WEBM ---
+    downloadBtn.addEventListener('click', async () => {
+      const originalHtml = downloadBtn.innerHTML;
+      const isTiktok = currentFormat === 'tiktok';
+
+      await document.fonts.ready;
+
+      // MODE 1: EXPORT VIDEO (RECORDING DENGAN OPACITY FADE OUT DETIK KE-5)
+      if (mediaType === 'video') {
+        const targetW = isTiktok ? 1080 : 1080;
+        const targetH = isTiktok ? 1440 : 1080; // Optimal untuk encoding video di browser
+
+        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span>Merekam Video...</span>`;
+        downloadBtn.disabled = true;
+
+        try {
+          const exportCanvas = document.createElement('canvas');
+          exportCanvas.width = targetW;
+          exportCanvas.height = targetH;
+          const ctx = exportCanvas.getContext('2d');
+
+          const stream = exportCanvas.captureStream(30);
+          
+          let mime = 'video/webm;codecs=vp9';
+          if (!MediaRecorder.isTypeSupported(mime)) {
+            mime = 'video/webm';
+          }
+          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
+            mime = 'video/mp4;codecs=avc1';
+          }
+
+          const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+          const recordedChunks = [];
+
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+            a.download = `oshitive_video_${currentFormat}_${Date.now()}.${ext}`;
+            a.href = url;
+            a.click();
+            showToast('Video berhasil di-download!');
+            downloadBtn.innerHTML = originalHtml;
+            downloadBtn.disabled = false;
+          };
+
+          // Reset playback video ke 0
+          bgPreviewVideo.pause();
+          bgPreviewVideo.currentTime = 0;
+          await new Promise(r => setTimeout(r, 200));
+
+          recorder.start();
+          bgPreviewVideo.play();
+
+          const totalDuration = Math.min(bgPreviewVideo.duration || 10, 15); // Maksimal 15 detik
+          const startTime = performance.now();
+
+          function drawVideoLoop() {
+            const elapsed = (performance.now() - startTime) / 1000;
+            
+            // Hitung opacity overlay: pudar setelah detik ke-5
+            let overlayOpacity = 1.0;
+            if (toggleAutoFade.checked) {
+              if (elapsed > 5.0) {
+                overlayOpacity = Math.max(0, 1.0 - (elapsed - 5.0) * 2.0); // fade out dalam 0.5s
+              }
+            }
+
+            renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
+
+            if (elapsed < totalDuration && !bgPreviewVideo.ended) {
+              requestAnimationFrame(drawVideoLoop);
+            } else {
+              recorder.stop();
+              bgPreviewVideo.pause();
+            }
+          }
+
+          requestAnimationFrame(drawVideoLoop);
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal merekam video.');
+          downloadBtn.innerHTML = originalHtml;
+          downloadBtn.disabled = false;
+        }
+        return;
+      }
+
+      // MODE 2: EXPORT GAMBAR STATIK (PNG HD)
+      const targetW = isTiktok ? 2494 : 1080;
+      const targetH = isTiktok ? 3324 : 1080;
+
+      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender ${isTiktok ? 'TikTok (3.3K)' : '1080p'}...</span>`;
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+
+        renderFrame(ctx, targetW, targetH, isTiktok, 1.0);
+
         const dataUrl = canvas.toDataURL('image/png', 1.0);
         const downloadLink = document.createElement('a');
         const cleanTag = tagInput.value.replace(/[^a-zA-Z0-9]/g, '_') || 'oshitive';
