@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oshitive News Post Generator</title>
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            brand: '#4262b2',
+            brandDark: '#1b3570',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Poligon geometris watermark sesuai gambar template */
+    .pattern-shards {
+      background-color: #f7f9fd;
+      background-image: 
+        radial-gradient(circle at 50% 120%, rgba(66, 98, 178, 0.12), transparent 70%),
+        linear-gradient(115deg, transparent 40%, rgba(66, 98, 178, 0.08) 40%, rgba(66, 98, 178, 0.08) 50%, transparent 50%),
+        linear-gradient(240deg, transparent 35%, rgba(66, 98, 178, 0.1) 35%, rgba(66, 98, 178, 0.1) 48%, transparent 48%),
+        linear-gradient(70deg, transparent 60%, rgba(66, 98, 178, 0.07) 60%, rgba(66, 98, 178, 0.07) 72%, transparent 72%),
+        linear-gradient(190deg, transparent 20%, rgba(66, 98, 178, 0.08) 20%, rgba(66, 98, 178, 0.08) 32%, transparent 32%);
+    }
+
+    input[type=range] {
+      accent-color: #4262b2;
+    }
+
+    /* Ratio styling untuk dynamic canvas container */
+    .aspect-instagram {
+      aspect-ratio: 1 / 1;
+      max-width: 530px;
+    }
+
+    .aspect-tiktok {
+      aspect-ratio: 2494 / 3324;
+      max-width: 440px;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased select-none">
+
+  <!-- Format Selector Modal (Muncul saat pertama kali buka) -->
+  <div id="formatModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition-all duration-300">
+    <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl relative text-center">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#4262b2] to-blue-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-white shadow-xl shadow-blue-500/20">
+        O+
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight mb-1">PILIH FORMAT KANVAS</h2>
+      <p class="text-slate-400 text-xs sm:text-sm mb-6">Pilih format postingan yang ingin dibuat hari ini</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+        <!-- Pilihan 1: Instagram (1:1) -->
+        <button id="selectModalIg" class="group p-5 bg-slate-900/90 hover:bg-slate-800/90 border-2 border-slate-700 hover:border-[#4262b2] rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer hover:shadow-xl hover:shadow-blue-600/20 active:scale-98">
+          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-500 flex items-center justify-center text-white text-3xl mb-3 shadow-md group-hover:scale-105 transition-transform">
+            <i class="ph-bold ph-instagram-logo"></i>
+          </div>
+          <span class="text-base font-black text-white">Instagram Feed</span>
+          <span class="text-xs font-semibold text-blue-400 mt-0.5">1080 x 1080 px</span>
+          <span class="text-[11px] text-slate-400 mt-2 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">Rasio Persegi (1:1)</span>
+        </button>
+
+        <!-- Pilihan 2: TikTok (3:4) -->
+        <button id="selectModalTiktok" class="group p-5 bg-slate-900/90 hover:bg-slate-800/90 border-2 border-slate-700 hover:border-[#4262b2] rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer hover:shadow-xl hover:shadow-blue-600/20 active:scale-98">
+          <div class="w-16 h-20 rounded-xl bg-gradient-to-b from-cyan-400 via-slate-900 to-rose-500 flex items-center justify-center text-white text-3xl mb-3 shadow-md group-hover:scale-105 transition-transform border border-slate-700">
+            <i class="ph-bold ph-tiktok-logo"></i>
+          </div>
+          <span class="text-base font-black text-white">TikTok Photo</span>
+          <span class="text-xs font-semibold text-cyan-400 mt-0.5">2494 x 3324 px</span>
+          <span class="text-[11px] text-slate-400 mt-2 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">Portrait HD (3:4)</span>
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-500 mt-6 italic">Anda dapat mengganti rasio ini kapan saja melalui tombol di navbar atas.</p>
+    </div>
+  </div>
+
+  <!-- Header Bar -->
+  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4262b2] to-blue-400 flex items-center justify-center font-black text-lg text-white shadow-lg shadow-blue-500/20">
+        O+
+      </div>
+      <div>
+        <h1 class="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+          OSHITIVE <span class="text-[10px] sm:text-[11px] bg-blue-600/30 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">Auto News Gen</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Format Switcher Buttons in Header -->
+    <div class="flex items-center gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+      <button id="btnSwitchIg" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer">
+        <i class="ph-bold ph-instagram-logo"></i>
+        <span>Instagram (1:1)</span>
+      </button>
+      <button id="btnSwitchTiktok" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer">
+        <i class="ph-bold ph-tiktok-logo"></i>
+        <span>TikTok (3:4)</span>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="downloadBtn" class="flex items-center gap-2 bg-[#4262b2] hover:bg-blue-600 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer">
+        <i class="ph-bold ph-download-simple text-base"></i>
+        <span id="downloadBtnText">Download PNG (1080p)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- Controls Sidebar (Left: 5 cols) -->
+    <div class="lg:col-span-5 flex flex-col gap-4 order-2 lg:order-1">
+      
+      <!-- Panel Input & Kontrol Gambar Latar -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ph-bold ph-image text-[#4262b2]"></i> Gambar Latar & Posisi
+          </label>
+          <button id="resetTransformBtn" class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer">
+            <i class="ph-bold ph-arrows-counter-clockwise"></i> Reset Posisi
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <!-- File Drop/Upload Area -->
+          <div class="grid grid-cols-2 gap-2">
+            <label class="border-2 border-dashed border-slate-700 hover:border-[#4262b2] rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-900/50 hover:bg-slate-800/40 transition-colors group">
+              <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
+              <i class="ph-bold ph-upload-simple text-xl text-slate-400 group-hover:text-blue-400 mb-0.5 transition-colors"></i>
+              <span class="text-[11px] font-semibold text-slate-300 group-hover:text-white" id="uploadLabelText">Pilih Foto / Video</span>
+            </label>
+
+            <!-- URL Input -->
+            <div class="flex flex-col justify-center gap-1 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 font-semibold">Atau Tempel URL:</span>
+              <div class="flex gap-1">
+                <input type="text" id="imageUrlInput" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
+                <button id="applyUrlBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-bold"><i class="ph-bold ph-arrow-right"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Playback & Auto Fade Controls (Muncul saat video dimuat) -->
+          <div id="videoControlsPanel" class="hidden bg-slate-900/90 border border-blue-900/60 rounded-xl p-3 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                <i class="ph-bold ph-video text-base"></i> Kontrol Media Video
+              </span>
+              <span id="videoTimeDisplay" class="font-mono text-[11px] text-slate-400 font-semibold">00:00 / 00:00</span>
+            </div>
+
+            <!-- Video playback scrub slider -->
+            <input type="range" id="videoTimeline" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+
+            <div class="flex items-center justify-between pt-1">
+              <div class="flex items-center gap-2">
+                <button id="btnPlayPause" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="ph-bold ph-play" id="playIcon"></i> Play
+                </button>
+                <button id="btnMuteVideo" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs cursor-pointer">
+                  <i class="ph-bold ph-speaker-high" id="muteIcon"></i>
+                </button>
+              </div>
+
+              <!-- Auto-Fade at 5s Setting -->
+              <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 text-[11px]">
+                <input type="checkbox" id="toggleAutoFade" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                <span class="font-medium text-slate-300">Hilang pada detik ke-<span class="text-blue-400 font-bold">5</span></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Petunjuk Drag Geser -->
+          <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-2.5 flex items-center gap-2.5 text-blue-200 text-xs">
+            <i class="ph-fill ph-hand-grabbing text-base text-blue-400 flex-shrink-0"></i>
+            <span><strong>Transform Langsung:</strong> Tarik titik ujung/sudut gambar (handle) untuk memperbesar/memperkecil, atau drag badan gambar untuk menggeser.</span>
+          </div>
+
+          <!-- Image Zoom Slider -->
+          <div class="pt-1">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Zoom Gambar</span>
+              <span id="zoomVal" class="font-mono text-blue-400 font-semibold">100%</span>
+            </div>
+            <input type="range" id="zoomInput" min="20" max="350" value="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Konten Teks & Auto Sizing -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3.5">
+        
+        <!-- Tag & Credit / Sumber Row Controls -->
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1">
+                <i class="ph-bold ph-tag text-[#4262b2]"></i> Tag Berita (Kiri)
+              </label>
+              <input type="text" id="tagInput" value="JKT48" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-[#4262b2]">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Warna Badge</label>
+              <div class="flex items-center gap-2">
+                <input type="color" id="primaryColorInput" value="#4262b2" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0">
+                <input type="text" id="primaryColorHex" value="#4262b2" class="w-full uppercase font-mono text-xs bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+              </div>
+            </div>
+          </div>
+
+          <!-- Opsi Toggle Latar Biru #4262b2 Bawah -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 cursor-pointer" for="toggleBlueBg">
+              <i class="ph-bold ph-paint-bucket text-[#4262b2]"></i> Latar Biru Bawah (#4262b2)
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleBlueBg" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+              <span id="labelBlueBgStatus" class="text-[11px] font-semibold text-blue-300">Aktif</span>
+            </label>
+          </div>
+
+          <!-- Credit / Sumber Controls (Sejajar Kanan) -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i class="ph-bold ph-camera text-[#4262b2]"></i> Sumber / Credit (Kanan)
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="toggleCredit" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                <span class="text-[11px] font-semibold text-blue-300">Tampilkan</span>
+              </label>
+            </div>
+            <input type="text" id="creditInput" value="Sumber: Twitter/X" placeholder="Contoh: Sumber: @officialJKT48" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#4262b2]">
+          </div>
+        </div>
+
+        <!-- Headline Caption Input & Auto Resize Engine -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i class="ph-bold ph-text-t text-[#4262b2]"></i> Teks Caption / Headline
+            </label>
+            <span class="text-[11px] font-semibold text-blue-300 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-lg">
+              Latar Adaptif Otomatis
+            </span>
+          </div>
+
+          <textarea id="headlineInput" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-[#4262b2] leading-relaxed">Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari</textarea>
+
+          <!-- Slider Ukuran Font Teks -->
+          <div id="manualFontContainer" class="pt-2">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Ukuran Font Headline:</span>
+              <span id="manualFontSizeVal" class="font-mono text-blue-400">24px</span>
+            </div>
+            <input type="range" id="manualFontSizeInput" min="16" max="38" value="24" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          </div>
+        </div>
+
+        <!-- Line Height -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Jarak Baris (Leading)</label>
+            <select id="lineHeightSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#4262b2]">
+              <option value="1.05">Sangat Rapat (1.05)</option>
+              <option value="1.14" selected>Normal Rapat (1.14)</option>
+              <option value="1.25">Sedang (1.25)</option>
+              <option value="1.35">Renggang (1.35)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Rata Teks</label>
+            <select id="textAlignSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+              <option value="left" selected>Rata Kiri</option>
+              <option value="center">Rata Tengah</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Footer Text Controls -->
+        <div class="pt-2 border-t border-slate-800 space-y-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">Footer Teks Kanan</label>
+            <input type="text" id="footerCta" value="Baca berita selengkapnya di oshitive.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Preview Canvas (Right: 7 cols) -->
+    <div class="lg:col-span-7 flex flex-col items-center order-1 lg:order-2">
+      
+      <div class="w-full flex items-center justify-between mb-2 px-1 max-w-[530px]">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <i class="ph-bold ph-eye text-blue-400"></i> Canvas Preview
+          </span>
+          <span id="canvasFormatBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-950 text-blue-300 border border-blue-800">
+            1080 x 1080 (1:1)
+          </span>
+        </div>
+        <button id="resetSampleBtn" class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer">
+          <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset Teks
+        </button>
+      </div>
+
+      <!-- Wrapper Preview Responsif -->
+      <div id="previewCardFrame" class="w-full aspect-instagram flex items-center justify-center bg-slate-950/80 border border-slate-800 rounded-2xl p-2 sm:p-3 shadow-2xl transition-all duration-300">
+        
+        <!-- CARD UTAMA PREVIEW (Ratio diatur dinamis oleh aspect class) -->
+        <div id="captureArea" class="relative w-full h-full overflow-hidden bg-slate-800 shadow-2xl flex flex-col justify-end touch-none select-none">
+          
+          <!-- Layer 1: Background Canvas / Image & Video Container (Draggable & Zoomable with Corner Handles) -->
+          <div id="bgLayerContainer" class="absolute inset-0 z-0 overflow-hidden bg-[#192b52]">
+            <!-- Bounding Box Wrapper for image/video + interactive corner transform handles -->
+            <div id="imageTransformBox" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-move origin-center group touch-none" style="width: 100%; height: 100%;">
+              <img id="bgPreviewImg" 
+                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80" 
+                   alt="News Background" 
+                   draggable="false"
+                   class="w-full h-full object-cover select-none pointer-events-none">
+              
+              <!-- Video Element (Hidden by default until video selected) -->
+              <video id="bgPreviewVideo" 
+                     playsinline 
+                     muted 
+                     loop 
+                     crossorigin="anonymous"
+                     class="hidden w-full h-full object-cover select-none pointer-events-none"></video>
+
+              <!-- Active Bounding Border Indicator -->
+              <div id="transformBorder" class="absolute inset-0 border-2 border-dashed border-blue-400/80 group-hover:border-blue-400 pointer-events-none transition-opacity duration-150"></div>
+
+              <!-- 4 Corner Resize Handles (Tarikan Ujung Gambar/Video) -->
+              <div class="corner-handle absolute -top-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nwse-resize hover:scale-125 transition-transform z-30" data-handle="top-left"></div>
+              <div class="corner-handle absolute -top-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="top-right"></div>
+              <div class="corner-handle absolute -bottom-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="bottom-left"></div>
+              <div class="corner-handle absolute -bottom-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nwse-resize hover:scale-125 transition-transform z-30" data-handle="bottom-right"></div>
+            </div>
+          </div>
+
+          <!-- Petunjuk visual drag & zoom saat hover pada gambar -->
+          <div class="absolute top-3 right-3 z-10 pointer-events-none bg-black/50 backdrop-blur px-2.5 py-1 rounded-full text-[10px] text-white/80 font-medium flex items-center gap-1">
+            <i class="ph-bold ph-arrows-out-cardinal"></i> Tarik ujung untuk resize
+          </div>
+
+          <!-- Layer 2: Gradient Halus Transisi ke Bawah -->
+          <div id="gradientOverlay" class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-45% to-[#4262b2] opacity-90 transition-opacity duration-700"></div>
+          
+          <!-- Layer 2.1: Bagian Solid Biru Bawah (#4262b2) -->
+          <div class="absolute bottom-0 left-0 right-0 h-[38%] z-10 pointer-events-none bg-[#4262b2] transition-opacity duration-700" id="solidBottomBg"></div>
+
+          <!-- Layer 3: Konten Box Berita & Footer (Bottom-anchored dynamic stack) -->
+          <!-- Disertakan ID newsOverlayGroup agar otomatis fade out pada detik ke-5 jika mode video -->
+          <div id="newsOverlayGroup" class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none">
+            
+            <!-- Dynamic Floating Group: Meta Badges + Caption Box (Menempel dan tumbuh ke atas dari footer, memudar saat detik ke-5) -->
+            <div id="fadingCaptionSection" class="w-full flex flex-col justify-end pointer-events-auto transition-opacity duration-700">
+              
+              <!-- Meta Badges Row: Tag (Kiri) & Credit / Sumber (Kanan) Sejajar di Puncak Box -->
+              <div id="metaRowContainer" class="w-full mb-2 flex items-center justify-between">
+                <!-- Tag Badge -->
+                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-lg shadow-md border border-white/80 uppercase">
+                  JKT48
+                </span>
+
+                <!-- Credit / Sumber Badge (Bisa di-toggle ON/OFF) -->
+                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md flex items-center gap-1.5 uppercase tracking-wide">
+                  <i class="ph-bold ph-camera text-[11px] text-blue-300"></i>
+                  <span id="previewCreditText">Sumber: Twitter/X</span>
+                </div>
+              </div>
+
+              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) -->
+              <div id="captionCardBox" class="w-full rounded-none border border-slate-900 shadow-2xl overflow-hidden pattern-shards relative p-3.5 sm:p-5 h-auto transition-all duration-200">
+                
+                <!-- SVG Low-Poly Shard Watermark Background -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]" preserveAspectRatio="none" viewBox="0 0 600 240" fill="none">
+                  <polygon points="40,240 120,40 180,240" fill="#4262b2" />
+                  <polygon points="170,240 260,0 330,240" fill="#4262b2" />
+                  <polygon points="310,240 400,20 480,240" fill="#4262b2" />
+                  <polygon points="460,240 540,60 610,240" fill="#4262b2" />
+                  <polygon points="0,180 80,0 140,200" fill="#203a7d" />
+                  <polygon points="220,240 310,40 370,240" fill="#203a7d" />
+                </svg>
+
+                <!-- Dynamic Headline Text -->
+                <div id="headlineWrapper" class="relative z-10 w-full">
+                  <h2 id="previewHeadline" 
+                      class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
+                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.025em; word-break: break-word;">
+                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR
+                  </h2>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer Branding & Pin Line Sambung (Tetap ada & selalu tampil permanen) -->
+            <div id="permanentFooterBar" class="w-full mt-3.5 sm:mt-4 flex items-center justify-between text-white text-[10px] sm:text-[12px] font-bold">
+              
+              <!-- Brand Title Kiri -->
+              <div id="previewBrand" class="tracking-wider uppercase font-black text-xs sm:text-sm pr-1">
+                OSHITIVE+
+              </div>
+
+              <!-- Connected Pin Bar -->
+              <div class="flex-1 mx-2 sm:mx-3 flex items-center">
+                <span class="w-2 h-2 rounded-full border-2 border-white bg-transparent flex-shrink-0"></span>
+                <span class="flex-1 h-[2px] bg-white/95"></span>
+                <span class="w-2 h-2 rounded-full border-2 border-white bg-transparent flex-shrink-0"></span>
+              </div>
+
+              <!-- CTA Kanan -->
+              <div id="previewFooterCta" class="font-bold tracking-tight text-right pl-1 truncate">
+                Baca berita selengkapnya di oshitive.com
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
+    <i class="ph-bold ph-check-circle text-lg"></i>
+    <span id="toastMsg" class="text-xs font-semibold">Berhasil</span>
+  </div>
+
+  <script>
+    // State Format Kanvas
+    // 'instagram': 1080x1080 | 'tiktok': 2494x3324
+    let currentFormat = 'instagram';
+    let mediaType = 'image'; // 'image' | 'video'
+    let isVideoFaded = false;
+
+    const formatModal = document.getElementById('formatModal');
+    const selectModalIg = document.getElementById('selectModalIg');
+    const selectModalTiktok = document.getElementById('selectModalTiktok');
+    const btnSwitchIg = document.getElementById('btnSwitchIg');
+    const btnSwitchTiktok = document.getElementById('btnSwitchTiktok');
+    const previewCardFrame = document.getElementById('previewCardFrame');
+    const canvasFormatBadge = document.getElementById('canvasFormatBadge');
+    const downloadBtnText = document.getElementById('downloadBtnText');
+
+    // Video Control Elements
+    const mediaInput = document.getElementById('mediaInput');
+    const uploadLabelText = document.getElementById('uploadLabelText');
+    const bgPreviewVideo = document.getElementById('bgPreviewVideo');
+    const videoControlsPanel = document.getElementById('videoControlsPanel');
+    const videoTimeline = document.getElementById('videoTimeline');
+    const videoTimeDisplay = document.getElementById('videoTimeDisplay');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const btnMuteVideo = document.getElementById('btnMuteVideo');
+    const muteIcon = document.getElementById('muteIcon');
+    const toggleAutoFade = document.getElementById('toggleAutoFade');
+    const fadingCaptionSection = document.getElementById('fadingCaptionSection');
+    const newsOverlayGroup = document.getElementById('newsOverlayGroup');
+    const gradientOverlay = document.getElementById('gradientOverlay');
+
+    // State Transformasi Gambar/Video Latar
+    let imgState = {
+      scale: 1.0,
+      x: 0,
+      y: 0,
+      mode: null, // 'drag' | 'resize'
+      handle: null,
+      startX: 0,
+      startY: 0,
+      initialScale: 1.0,
+      initialDist: 0,
+      anchorX: 0,
+      anchorY: 0,
+      initialW: 0,
+      initialH: 0
+    };
+
+    // DOM Elements
+    const captureArea = document.getElementById('captureArea');
+    const bgLayerContainer = document.getElementById('bgLayerContainer');
+    const imageTransformBox = document.getElementById('imageTransformBox');
+    const bgPreviewImg = document.getElementById('bgPreviewImg');
+    const transformBorder = document.getElementById('transformBorder');
+    const cornerHandles = document.querySelectorAll('.corner-handle');
+
+    const imageUrlInput = document.getElementById('imageUrlInput');
+    const applyUrlBtn = document.getElementById('applyUrlBtn');
+    const zoomInput = document.getElementById('zoomInput');
+    const zoomVal = document.getElementById('zoomVal');
+    const resetTransformBtn = document.getElementById('resetTransformBtn');
+
+    const tagInput = document.getElementById('tagInput');
+    const previewTag = document.getElementById('previewTag');
+    const primaryColorInput = document.getElementById('primaryColorInput');
+    const primaryColorHex = document.getElementById('primaryColorHex');
+    const solidBottomBg = document.getElementById('solidBottomBg');
+    const toggleBlueBg = document.getElementById('toggleBlueBg');
+    const labelBlueBgStatus = document.getElementById('labelBlueBgStatus');
+
+    const toggleCredit = document.getElementById('toggleCredit');
+    const creditInput = document.getElementById('creditInput');
+    const previewCreditBadge = document.getElementById('previewCreditBadge');
+    const previewCreditText = document.getElementById('previewCreditText');
+
+    const headlineInput = document.getElementById('headlineInput');
+    const previewHeadline = document.getElementById('previewHeadline');
+    const captionCardBox = document.getElementById('captionCardBox');
+    const headlineWrapper = document.getElementById('headlineWrapper');
+    const manualFontSizeInput = document.getElementById('manualFontSizeInput');
+    const manualFontSizeVal = document.getElementById('manualFontSizeVal');
+    const lineHeightSelect = document.getElementById('lineHeightSelect');
+    const textAlignSelect = document.getElementById('textAlignSelect');
+
+    const footerCtaInput = document.getElementById('footerCta');
+    const previewFooterCta = document.getElementById('previewFooterCta');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetSampleBtn = document.getElementById('resetSampleBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
+    }
+
+    // --- SWITCH KANVAS (INSTAGRAM / TIKTOK) ---
+    function setCanvasFormat(format) {
+      currentFormat = format;
+
+      if (format === 'tiktok') {
+        previewCardFrame.classList.remove('aspect-instagram');
+        previewCardFrame.classList.add('aspect-tiktok');
+        canvasFormatBadge.textContent = '2494 x 3324 (TikTok 3:4)';
+        downloadBtnText.textContent = mediaType === 'video' ? 'Download Video (MP4/WebM)' : 'Download TikTok PNG (3.3K)';
+        solidBottomBg.style.height = '28%';
+
+        btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
+        btnSwitchIg.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer";
+      } else {
+        previewCardFrame.classList.remove('aspect-tiktok');
+        previewCardFrame.classList.add('aspect-instagram');
+        canvasFormatBadge.textContent = '1080 x 1080 (1:1)';
+        downloadBtnText.textContent = mediaType === 'video' ? 'Download Video (MP4/WebM)' : 'Download PNG (1080p)';
+        solidBottomBg.style.height = '38%';
+
+        btnSwitchIg.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-[#4262b2] text-white shadow-sm cursor-pointer";
+        btnSwitchTiktok.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer";
+      }
+
+      imgState.x = 0;
+      imgState.y = 0;
+      renderImageTransform();
+      updateHeadline();
+    }
+
+    // Modal listeners
+    selectModalIg.addEventListener('click', () => {
+      setCanvasFormat('instagram');
+      formatModal.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => formatModal.style.display = 'none', 300);
+    });
+
+    selectModalTiktok.addEventListener('click', () => {
+      setCanvasFormat('tiktok');
+      formatModal.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => formatModal.style.display = 'none', 300);
+    });
+
+    btnSwitchIg.addEventListener('click', () => {
+      setCanvasFormat('instagram');
+      showToast('Format diubah ke Instagram Feed (1:1)');
+    });
+
+    btnSwitchTiktok.addEventListener('click', () => {
+      setCanvasFormat('tiktok');
+      showToast('Format diubah ke TikTok Photo (2494x3324 px)');
+    });
+
+    // --- 1. MEDIA INPUT: DUKUNGAN FOTO & VIDEO ---
+    function formatSeconds(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    mediaInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fileUrl = URL.createObjectURL(file);
+      if (file.type.startsWith('video/')) {
+        setupVideoMedia(fileUrl, file.name);
+      } else {
+        setupImageMedia(fileUrl);
+      }
+    });
+
+    function setupImageMedia(src) {
+      mediaType = 'image';
+      bgPreviewVideo.pause();
+      bgPreviewVideo.classList.add('hidden');
+      bgPreviewImg.classList.remove('hidden');
+      videoControlsPanel.classList.add('hidden');
+      bgPreviewImg.src = src;
+
+      // Kembalikan visibilitas caption
+      fadingCaptionSection.style.opacity = '1';
+      gradientOverlay.style.opacity = '0.9';
+      solidBottomBg.style.opacity = '1';
+
+      uploadLabelText.textContent = 'Ganti Media';
+      downloadBtnText.textContent = currentFormat === 'tiktok' ? 'Download TikTok PNG (3.3K)' : 'Download PNG (1080p)';
+      
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Foto berhasil dimuat!');
+    }
+
+    function setupVideoMedia(src, name) {
+      mediaType = 'video';
+      bgPreviewImg.classList.add('hidden');
+      bgPreviewVideo.classList.remove('hidden');
+      videoControlsPanel.classList.remove('hidden');
+      
+      bgPreviewVideo.src = src;
+      bgPreviewVideo.load();
+
+      uploadLabelText.textContent = name ? name.substring(0, 14) + '...' : 'Ganti Video';
+      downloadBtnText.textContent = 'Download Video (MP4/WebM)';
+
+      bgPreviewVideo.onloadedmetadata = () => {
+        videoTimeline.max = bgPreviewVideo.duration || 10;
+        videoTimeDisplay.textContent = `00:00 / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+        bgPreviewVideo.play();
+        playIcon.className = "ph-bold ph-pause";
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
+      };
+
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Video aktif! Caption otomatis memudar di detik ke-5.');
+    }
+
+    // Video playback & auto fade engine pada detik ke-5
+    bgPreviewVideo.addEventListener('timeupdate', () => {
+      const cur = bgPreviewVideo.currentTime;
+      videoTimeline.value = cur;
+      videoTimeDisplay.textContent = `${formatSeconds(cur)} / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+
+      if (toggleAutoFade.checked && mediaType === 'video') {
+        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s), footer tetap tinggal
+        if (cur >= 5.0) {
+          if (!isVideoFaded) {
+            fadingCaptionSection.style.opacity = '0';
+            gradientOverlay.style.opacity = '0';
+            solidBottomBg.style.opacity = '0';
+            isVideoFaded = true;
+          }
+        } else {
+          if (isVideoFaded) {
+            fadingCaptionSection.style.opacity = '1';
+            gradientOverlay.style.opacity = '0.9';
+            solidBottomBg.style.opacity = '1';
+            isVideoFaded = false;
+          }
+        }
+      } else {
+        // Jika auto fade nonaktif, pastikan selalu terlihat
+        fadingCaptionSection.style.opacity = '1';
+        gradientOverlay.style.opacity = '0.9';
+        solidBottomBg.style.opacity = '1';
+      }
+    });
+
+    videoTimeline.addEventListener('input', (e) => {
+      if (bgPreviewVideo.duration) {
+        bgPreviewVideo.currentTime = parseFloat(e.target.value);
+      }
+    });
+
+    btnPlayPause.addEventListener('click', () => {
+      if (bgPreviewVideo.paused) {
+        bgPreviewVideo.play();
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
+      } else {
+        bgPreviewVideo.pause();
+        btnPlayPause.innerHTML = '<i class="ph-bold ph-play" id="playIcon"></i> Play';
+      }
+    });
+
+    btnMuteVideo.addEventListener('click', () => {
+      bgPreviewVideo.muted = !bgPreviewVideo.muted;
+      if (bgPreviewVideo.muted) {
+        muteIcon.className = "ph-bold ph-speaker-slash";
+      } else {
+        muteIcon.className = "ph-bold ph-speaker-high";
+      }
+    });
+
+    toggleAutoFade.addEventListener('change', () => {
+      if (!toggleAutoFade.checked) {
+        fadingCaptionSection.style.opacity = '1';
+        gradientOverlay.style.opacity = '0.9';
+        solidBottomBg.style.opacity = '1';
+      }
+    });
+
+    applyUrlBtn.addEventListener('click', () => {
+      const url = imageUrlInput.value.trim();
+      if (!url) return;
+
+      if (url.match(/\.(mp4|webm|mov)(\?.*)?$/i)) {
+        setupVideoMedia(url, 'video_url');
+      } else {
+        setupImageMedia(url);
+      }
+    });
+
+    // --- 2. INTERACTIVE TRANSFORM: DRAG & CORNER RESIZE HANDLES ---
+    function renderImageTransform() {
+      imageTransformBox.style.transform = `translate(calc(-50% + ${imgState.x}px), calc(-50% + ${imgState.y}px)) scale(${imgState.scale})`;
+      zoomVal.textContent = Math.round(imgState.scale * 100) + '%';
+      zoomInput.value = Math.round(imgState.scale * 100);
+    }
+
+    // Dragging the main image/video body
+    imageTransformBox.addEventListener('pointerdown', (e) => {
+      if (e.target.classList.contains('corner-handle')) return;
+      imgState.mode = 'drag';
+      imgState.startX = e.clientX - imgState.x;
+      imgState.startY = e.clientY - imgState.y;
+      imageTransformBox.setPointerCapture(e.pointerId);
+    });
+
+    // Corner handle resize dengan TITIK TUMPU (ANCHOR) di sudut berlawanan
+    cornerHandles.forEach(handle => {
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        imgState.mode = 'resize';
+        imgState.handle = handle.dataset.handle;
+        
+        const boxRect = imageTransformBox.getBoundingClientRect();
+        
+        if (imgState.handle === 'bottom-right') {
+          imgState.anchorX = boxRect.left;
+          imgState.anchorY = boxRect.top;
+        } else if (imgState.handle === 'bottom-left') {
+          imgState.anchorX = boxRect.right;
+          imgState.anchorY = boxRect.top;
+        } else if (imgState.handle === 'top-right') {
+          imgState.anchorX = boxRect.left;
+          imgState.anchorY = boxRect.bottom;
+        } else if (imgState.handle === 'top-left') {
+          imgState.anchorX = boxRect.right;
+          imgState.anchorY = boxRect.bottom;
+        }
+
+        imgState.initialScale = imgState.scale;
+        imgState.initialDist = Math.hypot(e.clientX - imgState.anchorX, e.clientY - imgState.anchorY);
+        imgState.initialW = boxRect.width;
+        imgState.initialH = boxRect.height;
+        
+        handle.setPointerCapture(e.pointerId);
+      });
+
+      handle.addEventListener('pointermove', (e) => {
+        if (imgState.mode !== 'resize') return;
+        
+        const currentDist = Math.hypot(e.clientX - imgState.anchorX, e.clientY - imgState.anchorY);
+        if (imgState.initialDist > 5) {
+          const ratio = currentDist / imgState.initialDist;
+          const newScale = Math.min(Math.max(imgState.initialScale * ratio, 0.2), 4.0);
+          
+          const actualRatio = newScale / imgState.initialScale;
+          const newW = imgState.initialW * actualRatio;
+          const newH = imgState.initialH * actualRatio;
+
+          let newCenterX = 0;
+          let newCenterY = 0;
+
+          if (imgState.handle === 'bottom-right') {
+            newCenterX = imgState.anchorX + newW / 2;
+            newCenterY = imgState.anchorY + newH / 2;
+          } else if (imgState.handle === 'bottom-left') {
+            newCenterX = imgState.anchorX - newW / 2;
+            newCenterY = imgState.anchorY + newH / 2;
+          } else if (imgState.handle === 'top-right') {
+            newCenterX = imgState.anchorX + newW / 2;
+            newCenterY = imgState.anchorY - newH / 2;
+          } else if (imgState.handle === 'top-left') {
+            newCenterX = imgState.anchorX - newW / 2;
+            newCenterY = imgState.anchorY - newH / 2;
+          }
+
+          const containerRect = bgLayerContainer.getBoundingClientRect();
+          const containerMidX = containerRect.left + containerRect.width / 2;
+          const containerMidY = containerRect.top + containerRect.height / 2;
+
+          imgState.x = newCenterX - containerMidX;
+          imgState.y = newCenterY - containerMidY;
+          imgState.scale = newScale;
+          
+          renderImageTransform();
+        }
+      });
+
+      handle.addEventListener('pointerup', (e) => {
+        if (imgState.mode === 'resize') {
+          imgState.mode = null;
+          handle.releasePointerCapture(e.pointerId);
+        }
+      });
+      handle.addEventListener('pointercancel', (e) => {
+        if (imgState.mode === 'resize') {
+          imgState.mode = null;
+          handle.releasePointerCapture(e.pointerId);
+        }
+      });
+    });
+
+    imageTransformBox.addEventListener('pointermove', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.x = e.clientX - imgState.startX;
+        imgState.y = e.clientY - imgState.startY;
+        renderImageTransform();
+      }
+    });
+
+    imageTransformBox.addEventListener('pointerup', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.mode = null;
+        imageTransformBox.releasePointerCapture(e.pointerId);
+      }
+    });
+
+    imageTransformBox.addEventListener('pointercancel', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.mode = null;
+        imageTransformBox.releasePointerCapture(e.pointerId);
+      }
+    });
+
+    bgLayerContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomStep = e.deltaY < 0 ? 0.08 : -0.08;
+      imgState.scale = Math.min(Math.max(imgState.scale + zoomStep, 0.2), 4.0);
+      renderImageTransform();
+    }, { passive: false });
+
+    zoomInput.addEventListener('input', (e) => {
+      imgState.scale = parseFloat(e.target.value) / 100;
+      renderImageTransform();
+    });
+
+    resetTransformBtn.addEventListener('click', () => {
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Posisi & ukuran di-reset');
+    });
+
+    // --- 3. ENGINE DYNAMIC HEIGHT CAPTION & SYNCS ---
+    function updateHeadline() {
+      previewHeadline.textContent = headlineInput.value || 'Ketik Judul Berita Di Sini';
+      previewHeadline.style.fontSize = `${manualFontSizeInput.value}px`;
+    }
+
+    headlineInput.addEventListener('input', updateHeadline);
+
+    manualFontSizeInput.addEventListener('input', (e) => {
+      manualFontSizeVal.textContent = `${e.target.value}px`;
+      updateHeadline();
+    });
+
+    lineHeightSelect.addEventListener('change', (e) => {
+      previewHeadline.style.lineHeight = e.target.value;
+    });
+
+    textAlignSelect.addEventListener('change', (e) => {
+      previewHeadline.style.textAlign = e.target.value;
+    });
+
+    tagInput.addEventListener('input', () => {
+      previewTag.textContent = tagInput.value || 'TAG';
+    });
+
+    creditInput.addEventListener('input', () => {
+      previewCreditText.textContent = creditInput.value || 'Sumber: Twitter/X';
+    });
+
+    toggleCredit.addEventListener('change', () => {
+      if (toggleCredit.checked) {
+        previewCreditBadge.classList.remove('hidden');
+        creditInput.disabled = false;
+      } else {
+        previewCreditBadge.classList.add('hidden');
+        creditInput.disabled = true;
+      }
+    });
+
+    // Toggle Latar Biru Bawah #4262b2 & Gradien
+    toggleBlueBg.addEventListener('change', () => {
+      const isVisible = toggleBlueBg.checked;
+      labelBlueBgStatus.textContent = isVisible ? 'Aktif' : 'Mati';
+      labelBlueBgStatus.className = isVisible ? 'text-[11px] font-semibold text-blue-300' : 'text-[11px] font-semibold text-slate-400';
+      solidBottomBg.classList.toggle('hidden', !isVisible);
+      gradientOverlay.classList.toggle('hidden', !isVisible);
+    });
+
+    function applyPrimaryColor(color) {
+      previewHeadline.style.color = color;
+      previewTag.style.color = color;
+      solidBottomBg.style.backgroundColor = color;
+      primaryColorHex.value = color.toUpperCase();
+      primaryColorInput.value = color;
+    }
+
+    primaryColorInput.addEventListener('input', (e) => applyPrimaryColor(e.target.value));
+    primaryColorHex.addEventListener('input', (e) => {
+      if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+        applyPrimaryColor(e.target.value);
+      }
+    });
+
+    footerCtaInput.addEventListener('input', () => {
+      previewFooterCta.textContent = footerCtaInput.value;
+    });
+
+    resetSampleBtn.addEventListener('click', () => {
+      tagInput.value = "JKT48";
+      previewTag.textContent = "JKT48";
+      toggleCredit.checked = true;
+      previewCreditBadge.classList.remove('hidden');
+      creditInput.disabled = false;
+      creditInput.value = "Sumber: Twitter/X";
+      previewCreditText.textContent = creditInput.value;
+      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR";
+      previewHeadline.textContent = headlineInput.value;
+      footerCtaInput.value = "Baca berita selengkapnya di oshitive.com";
+      previewFooterCta.textContent = footerCtaInput.value;
+      manualFontSizeInput.value = 24;
+      manualFontSizeVal.textContent = "24px";
+      lineHeightSelect.value = "1.14";
+      previewHeadline.style.lineHeight = "1.14";
+      applyPrimaryColor("#4262b2");
+      updateHeadline();
+      showToast('Teks di-reset ke default');
+    });
+
+    // --- 4. RENDER FRAME KE CANVAS DENGAN KONTROL OPACITY (UNTUK FOTO MAUPUN VIDEO) ---
+    function renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity = 1.0) {
+      const rect = captureArea.getBoundingClientRect();
+      const scaleFactor = targetW / rect.width;
+
+      ctx.save();
+      ctx.fillStyle = '#192b52';
+      ctx.fillRect(0, 0, targetW, targetH);
+
+      // Gambar Media Latar (Foto atau Video)
+      // Gunakan ukuran bounding box asli display agar tampilan persis 1:1 identik
+      const currentMedia = mediaType === 'video' ? bgPreviewVideo : bgPreviewImg;
+      const mediaW = mediaType === 'video' ? bgPreviewVideo.videoWidth : bgPreviewImg.naturalWidth;
+      const mediaH = mediaType === 'video' ? bgPreviewVideo.videoHeight : bgPreviewImg.naturalHeight;
+
+      if (mediaW > 0 && mediaH > 0) {
+        ctx.save();
+        const mediaAspect = mediaW / mediaH;
+        const containerAspect = rect.width / rect.height;
+        let baseW, baseH;
+
+        if (mediaAspect > containerAspect) {
+          baseH = targetH;
+          baseW = targetH * mediaAspect;
+        } else {
+          baseW = targetW;
+          baseH = targetW / mediaAspect;
+        }
+
+        ctx.translate((targetW / 2) + (imgState.x * scaleFactor), (targetH / 2) + (imgState.y * scaleFactor));
+        ctx.scale(imgState.scale, imgState.scale);
+        ctx.drawImage(currentMedia, -baseW / 2, -baseH / 2, baseW, baseH);
+        ctx.restore();
+      }
+
+      // Ambil posisi elemen aktual dari DOM preview untuk menjamin 100% presisi visual
+      const footerDom = document.getElementById('permanentFooterBar');
+      const footerRect = footerDom.getBoundingClientRect();
+      const cardRect = captionCardBox.getBoundingClientRect();
+      const tagRect = previewTag.getBoundingClientRect();
+      const creditRect = toggleCredit.checked ? previewCreditBadge.getBoundingClientRect() : null;
+
+      const boxX = (cardRect.left - rect.left) * scaleFactor;
+      const boxY = (cardRect.top - rect.top) * scaleFactor;
+      const boxW = cardRect.width * scaleFactor;
+      const boxH = cardRect.height * scaleFactor;
+
+      // 1. Gambar Bagian Fading (Gradien, Latar Biru Bawah, Tag, Credit, dan Kotak Caption)
+      if (overlayOpacity > 0.001) {
+        ctx.save();
+        ctx.globalAlpha = overlayOpacity;
+
+        const isBlueBgActive = toggleBlueBg.checked;
+        if (isBlueBgActive) {
+          const solidDom = document.getElementById('solidBottomBg');
+          const solidRect = solidDom.getBoundingClientRect();
+          const solidH = solidRect.height * scaleFactor;
+          const solidY = (solidRect.top - rect.top) * scaleFactor;
+
+          const gradH = targetH * (isTiktok ? 0.35 : 0.32);
+          const gradYStart = Math.max(0, solidY - gradH);
+
+          const grad = ctx.createLinearGradient(0, gradYStart, 0, solidY);
+          grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
+          grad.addColorStop(1, '#4262b2');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, gradYStart, targetW, solidY - gradYStart);
+
+          ctx.fillStyle = primaryColorInput.value || '#4262b2';
+          ctx.fillRect(0, solidY, targetW, solidH);
+        }
+
+        // Render Tag Badge (Kiri)
+        const tagText = (tagInput.value || 'JKT48').toUpperCase();
+        const tagX = (tagRect.left - rect.left) * scaleFactor;
+        const tagY = (tagRect.top - rect.top) * scaleFactor;
+        const tagWidth = tagRect.width * scaleFactor;
+        const tagHeight = tagRect.height * scaleFactor;
+        const tagRadius = Math.max(4, 8 * scaleFactor);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(tagX, tagY, tagWidth, tagHeight, tagRadius);
+        ctx.fill();
+
+        const tagComputed = window.getComputedStyle(previewTag);
+        const tagFontSize = Math.round(parseFloat(tagComputed.fontSize) * scaleFactor);
+        ctx.font = `900 ${tagFontSize}px Poppins, sans-serif`;
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText(tagText, tagX + (tagWidth / 2), tagY + (tagHeight / 2) + (1 * scaleFactor));
+
+        // Render Credit Badge (Kanan)
+        if (toggleCredit.checked && creditRect) {
+          const creditStr = (creditInput.value || 'Sumber: Twitter/X').toUpperCase();
+          const creditX = (creditRect.left - rect.left) * scaleFactor;
+          const creditY = (creditRect.top - rect.top) * scaleFactor;
+          const creditW = creditRect.width * scaleFactor;
+          const creditH = creditRect.height * scaleFactor;
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.beginPath();
+          ctx.roundRect(creditX, creditY, creditW, creditH, tagRadius);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
+          ctx.stroke();
+
+          const creditComputed = window.getComputedStyle(previewCreditText);
+          const creditFontSize = Math.round(parseFloat(creditComputed.fontSize) * scaleFactor);
+          ctx.font = `700 ${creditFontSize}px Poppins, sans-serif`;
+          ctx.fillStyle = '#ffffff';
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center';
+          ctx.fillText(creditStr, creditX + (creditW / 2), creditY + (creditH / 2) + (1 * scaleFactor));
+        }
+
+        // Render Kotak Putih Dinamis
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#f8fafd';
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+
+        // Watermark polygons
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(boxX, boxY, boxW, boxH);
+        ctx.clip();
+        ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
+
+        const shardCoords = [
+          [[boxX, boxY + boxH], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxY + boxH]],
+          [[boxX + boxW * 0.28, boxY + boxH], [boxX + boxW * 0.48, boxY], [boxX + boxW * 0.62, boxY + boxH]],
+          [[boxX + boxW * 0.58, boxY + boxH], [boxX + boxW * 0.78, boxY], [boxX + boxW * 0.92, boxY + boxH]]
+        ];
+
+        shardCoords.forEach(poly => {
+          ctx.beginPath();
+          ctx.moveTo(poly[0][0], poly[0][1]);
+          ctx.lineTo(poly[1][0], poly[1][1]);
+          ctx.lineTo(poly[2][0], poly[2][1]);
+          ctx.closePath();
+          ctx.fill();
+        });
+        ctx.restore();
+
+        // Border Kotak Caption
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = Math.max(1.5, 2.5 * scaleFactor);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // Render Teks Headline (Wrapping akurat mengikuti lebar preview)
+        const computedHeadline = window.getComputedStyle(previewHeadline);
+        const headlineFontSize = Math.round(parseFloat(computedHeadline.fontSize) * scaleFactor);
+        const headlineLineHeight = headlineFontSize * parseFloat(lineHeightSelect.value);
+
+        ctx.font = `900 ${headlineFontSize}px Poppins, sans-serif`;
+        const words = (headlineInput.value || '').split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        const textPadX = 18 * scaleFactor;
+        const maxTextW = boxW - (textPadX * 2);
+
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+          const testWidth = ctx.measureText(testLine).width;
+          if (testWidth > maxTextW && i > 0) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+
+        const textTotalH = lines.length * headlineLineHeight;
+        const textStartY = boxY + (boxH - textTotalH) / 2 + (headlineFontSize * 0.85);
+
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
+        const textTargetX = textAlignSelect.value === 'center' ? (boxX + boxW / 2) : (boxX + textPadX);
+
+        lines.forEach((line, idx) => {
+          ctx.fillText(line, textTargetX, textStartY + (idx * headlineLineHeight));
+        });
+
+        ctx.restore();
+      }
+
+      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL (TIDAK IKUT HILANG)
+      ctx.save();
+      const footY = (footerRect.top - rect.top) * scaleFactor;
+      const footH = footerRect.height * scaleFactor;
+      const footBaselineY = footY + (footH / 2);
+
+      // Watermark OSHITIVE+ Kiri
+      const brandDom = document.getElementById('previewBrand');
+      const brandComputed = window.getComputedStyle(brandDom);
+      const brandFontSize = Math.round(parseFloat(brandComputed.fontSize) * scaleFactor);
+      ctx.font = `900 ${brandFontSize}px Poppins, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const brandText = 'OSHITIVE+';
+      ctx.fillText(brandText, boxX, footBaselineY);
+      const brandW = ctx.measureText(brandText).width;
+
+      // Footer CTA Kanan
+      const ctaDom = document.getElementById('previewFooterCta');
+      const ctaComputed = window.getComputedStyle(ctaDom);
+      const ctaFontSize = Math.round(parseFloat(ctaComputed.fontSize) * scaleFactor);
+      ctx.font = `700 ${ctaFontSize}px Poppins, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const ctaText = footerCtaInput.value || 'Baca berita selengkapnya di oshitive.com';
+      ctx.fillText(ctaText, boxX + boxW, footBaselineY);
+      const ctaW = ctx.measureText(ctaText).width;
+
+      // Garis Pin Penghubung
+      const lineGap = 12 * scaleFactor;
+      const lineStartX = boxX + brandW + lineGap;
+      const lineEndX = (boxX + boxW) - ctaW - lineGap;
+
+      if (lineEndX > lineStartX + (20 * scaleFactor)) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
+        const dotR = Math.max(2.5, 3.5 * scaleFactor);
+
+        ctx.beginPath();
+        ctx.arc(lineStartX, footBaselineY, dotR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineStartX + dotR + (2 * scaleFactor), footBaselineY);
+        ctx.lineTo(lineEndX - dotR - (2 * scaleFactor), footBaselineY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(lineEndX, footBaselineY, dotR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // --- 5. EXPORT ENGINE: GAMBAR PNG ATAU VIDEO MP4/WEBM ---
+    downloadBtn.addEventListener('click', async () => {
+      const originalHtml = downloadBtn.innerHTML;
+      const isTiktok = currentFormat === 'tiktok';
+
+      await document.fonts.ready;
+
+      // MODE 1: EXPORT VIDEO (RECORDING DENGAN OPACITY FADE OUT DETIK KE-5)
+      if (mediaType === 'video') {
+        const targetW = isTiktok ? 1080 : 1080;
+        const targetH = isTiktok ? 1440 : 1080; // Optimal untuk encoding video di browser
+
+        downloadBtn.innerHTML = `<i class="ph-bold ph-record animate-pulse text-rose-400"></i><span>Merekam Video...</span>`;
+        downloadBtn.disabled = true;
+
+        try {
+          const exportCanvas = document.createElement('canvas');
+          exportCanvas.width = targetW;
+          exportCanvas.height = targetH;
+          const ctx = exportCanvas.getContext('2d');
+
+          const stream = exportCanvas.captureStream(30);
+          
+          let mime = 'video/webm;codecs=vp9';
+          if (!MediaRecorder.isTypeSupported(mime)) {
+            mime = 'video/webm';
+          }
+          if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
+            mime = 'video/mp4;codecs=avc1';
+          }
+
+          const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+          const recordedChunks = [];
+
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+            a.download = `oshitive_video_${currentFormat}_${Date.now()}.${ext}`;
+            a.href = url;
+            a.click();
+            showToast('Video berhasil di-download!');
+            downloadBtn.innerHTML = originalHtml;
+            downloadBtn.disabled = false;
+          };
+
+          // Reset playback video ke 0
+          bgPreviewVideo.pause();
+          bgPreviewVideo.currentTime = 0;
+          await new Promise(r => setTimeout(r, 200));
+
+          recorder.start();
+          bgPreviewVideo.play();
+
+          const totalDuration = Math.min(bgPreviewVideo.duration || 10, 15); // Maksimal 15 detik
+          const startTime = performance.now();
+
+          function drawVideoLoop() {
+            const elapsed = (performance.now() - startTime) / 1000;
+            
+            // Hitung opacity overlay: pudar setelah detik ke-5
+            let overlayOpacity = 1.0;
+            if (toggleAutoFade.checked) {
+              if (elapsed > 5.0) {
+                overlayOpacity = Math.max(0, 1.0 - (elapsed - 5.0) * 2.0); // fade out dalam 0.5s
+              }
+            }
+
+            renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
+
+            if (elapsed < totalDuration && !bgPreviewVideo.ended) {
+              requestAnimationFrame(drawVideoLoop);
+            } else {
+              recorder.stop();
+              bgPreviewVideo.pause();
+            }
+          }
+
+          requestAnimationFrame(drawVideoLoop);
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal merekam video.');
+          downloadBtn.innerHTML = originalHtml;
+          downloadBtn.disabled = false;
+        }
+        return;
+      }
+
+      // MODE 2: EXPORT GAMBAR STATIK (PNG HD)
+      const targetW = isTiktok ? 2494 : 1080;
+      const targetH = isTiktok ? 3324 : 1080;
+
+      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender ${isTiktok ? 'TikTok (3.3K)' : '1080p'}...</span>`;
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+
+        renderFrame(ctx, targetW, targetH, isTiktok, 1.0);
+
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
+        const downloadLink = document.createElement('a');
+        const cleanTag = tagInput.value.replace(/[^a-zA-Z0-9]/g, '_') || 'oshitive';
+        const formatLabel = isTiktok ? 'tiktok_2494x3324' : 'instagram_1080x1080';
+        downloadLink.download = `oshitive_${cleanTag}_${formatLabel}_${Date.now()}.png`;
+        downloadLink.href = dataUrl;
+        downloadLink.click();
+
+        showToast(`Gambar ${isTiktok ? 'TikTok 3.3K' : 'Instagram 1080p'} berhasil di-download!`);
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal merender gambar.");
+      } finally {
+        downloadBtn.innerHTML = originalHtml;
+        downloadBtn.disabled = false;
+      }
+    });
+
+    // Inisialisasi awal saat font siap
+    document.fonts.ready.then(() => {
+      updateHeadline();
+      renderImageTransform();
+    });
+  </script>
+</body>
+</html>
