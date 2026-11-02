@@ -37,12 +37,7 @@
     /* Poligon geometris watermark sesuai gambar template */
     .pattern-shards {
       background-color: #f7f9fd;
-      background-image: 
-        radial-gradient(circle at 50% 120%, rgba(66, 98, 178, 0.12), transparent 70%),
-        linear-gradient(115deg, transparent 40%, rgba(66, 98, 178, 0.08) 40%, rgba(66, 98, 178, 0.08) 50%, transparent 50%),
-        linear-gradient(240deg, transparent 35%, rgba(66, 98, 178, 0.1) 35%, rgba(66, 98, 178, 0.1) 48%, transparent 48%),
-        linear-gradient(70deg, transparent 60%, rgba(66, 98, 178, 0.07) 60%, rgba(66, 98, 178, 0.07) 72%, transparent 72%),
-        linear-gradient(190deg, transparent 20%, rgba(66, 98, 178, 0.08) 20%, rgba(66, 98, 178, 0.08) 32%, transparent 32%);
+      position: relative;
     }
 
     input[type=range] {
@@ -178,6 +173,33 @@
 
             <!-- Video playback scrub slider -->
             <input type="range" id="videoTimeline" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+
+            <!-- FITUR POTONG / TRIM VIDEO (Start & End Time) -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-2.5 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-300 flex items-center gap-1">
+                  <i class="ph-bold ph-scissors text-[#4262b2]"></i> Potong Video (Trim)
+                </span>
+                <button id="btnResetTrim" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">Reset Penuh</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Mulai (Detik):</label>
+                  <div class="flex gap-1">
+                    <input type="number" id="trimStart" min="0" step="0.1" value="0" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                    <button id="btnSetStartCurrent" title="Set dari waktu saat ini" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 rounded text-[10px] font-bold">Now</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Selesai (Detik):</label>
+                  <div class="flex gap-1">
+                    <input type="number" id="trimEnd" min="0.5" step="0.1" value="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                    <button id="btnSetEndCurrent" title="Set dari waktu saat ini" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 rounded text-[10px] font-bold">Now</button>
+                  </div>
+                </div>
+              </div>
+              <span id="trimDurationInfo" class="text-[10px] text-slate-400 font-medium">Durasi potongan: <span class="text-white font-bold">0.0s</span></span>
+            </div>
 
             <div class="flex items-center justify-between pt-1">
               <div class="flex items-center gap-2">
@@ -401,23 +423,24 @@
               </div>
 
               <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) DENGAN PADDING SIMETRIS -->
-              <div id="captionCardBox" class="w-full rounded-none border-2 border-slate-900 shadow-2xl overflow-hidden pattern-shards relative px-4 py-3 sm:px-6 sm:py-4 h-auto transition-all duration-200 flex items-center">
+              <div id="captionCardBox" class="w-full rounded-none border-[2.5px] border-[#111827] shadow-2xl overflow-hidden pattern-shards relative px-5 py-4 sm:px-7 sm:py-5 h-auto transition-all duration-200 flex items-center bg-[#f7f9fd]">
                 
-                <!-- SVG Low-Poly Shard Watermark Background -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]" preserveAspectRatio="none" viewBox="0 0 600 240" fill="none">
-                  <polygon points="40,240 120,40 180,240" fill="#4262b2" />
-                  <polygon points="170,240 260,0 330,240" fill="#4262b2" />
-                  <polygon points="310,240 400,20 480,240" fill="#4262b2" />
-                  <polygon points="460,240 540,60 610,240" fill="#4262b2" />
-                  <polygon points="0,180 80,0 140,200" fill="#203a7d" />
-                  <polygon points="220,240 310,40 370,240" fill="#203a7d" />
+                <!-- SVG Low-Poly Shard Watermark Background (Zigzag tajam khas Oshitive) -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.22]" preserveAspectRatio="none" viewBox="0 0 800 240" fill="none">
+                  <polygon points="0,0 85,240 160,0" fill="#4262b2" opacity="0.4" />
+                  <polygon points="120,240 210,0 290,240" fill="#203a7d" opacity="0.35" />
+                  <polygon points="260,0 350,240 430,0" fill="#4262b2" opacity="0.5" />
+                  <polygon points="390,240 490,0 570,240" fill="#203a7d" opacity="0.3" />
+                  <polygon points="530,0 630,240 710,0" fill="#4262b2" opacity="0.45" />
+                  <polygon points="670,240 760,0 800,240" fill="#203a7d" opacity="0.35" />
+                  <polygon points="730,0 800,180 800,0" fill="#4262b2" opacity="0.25" />
                 </svg>
 
                 <!-- Dynamic Headline Text -->
                 <div id="headlineWrapper" class="relative z-10 w-full flex items-center">
                   <h2 id="previewHeadline" 
-                      class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
-                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.02em; word-break: break-word;">
+                      class="font-poppins font-black text-left w-full leading-[1.08] select-text" 
+                      style="color: #4262b2; font-size: 26px; letter-spacing: -0.025em; word-break: break-word;">
                     Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
                   </h2>
                 </div>
@@ -494,6 +517,50 @@
     const fadingCaptionSection = document.getElementById('fadingCaptionSection');
     const newsOverlayGroup = document.getElementById('newsOverlayGroup');
     const gradientOverlay = document.getElementById('gradientOverlay');
+
+    // Trim Video Elements
+    const trimStartInput = document.getElementById('trimStart');
+    const trimEndInput = document.getElementById('trimEnd');
+    const btnSetStartCurrent = document.getElementById('btnSetStartCurrent');
+    const btnSetEndCurrent = document.getElementById('btnSetEndCurrent');
+    const btnResetTrim = document.getElementById('btnResetTrim');
+    const trimDurationInfo = document.getElementById('trimDurationInfo');
+
+    function updateTrimInfo() {
+      const start = parseFloat(trimStartInput.value) || 0;
+      const end = parseFloat(trimEndInput.value) || (bgPreviewVideo.duration || 0);
+      const dur = Math.max(0, end - start);
+      trimDurationInfo.innerHTML = `Durasi rekaman potongan: <span class="text-blue-300 font-bold">${dur.toFixed(1)}s</span> (Detik ${start.toFixed(1)} - ${end.toFixed(1)})`;
+    }
+
+    trimStartInput.addEventListener('input', () => {
+      const start = parseFloat(trimStartInput.value) || 0;
+      if (bgPreviewVideo.currentTime < start) bgPreviewVideo.currentTime = start;
+      updateTrimInfo();
+    });
+
+    trimEndInput.addEventListener('input', updateTrimInfo);
+
+    btnSetStartCurrent.addEventListener('click', () => {
+      const cur = bgPreviewVideo.currentTime || 0;
+      trimStartInput.value = cur.toFixed(1);
+      updateTrimInfo();
+      showToast(`Titik awal video di-set ke detik ${cur.toFixed(1)}s`);
+    });
+
+    btnSetEndCurrent.addEventListener('click', () => {
+      const cur = bgPreviewVideo.currentTime || (bgPreviewVideo.duration || 10);
+      trimEndInput.value = cur.toFixed(1);
+      updateTrimInfo();
+      showToast(`Titik akhir video di-set ke detik ${cur.toFixed(1)}s`);
+    });
+
+    btnResetTrim.addEventListener('click', () => {
+      trimStartInput.value = "0";
+      trimEndInput.value = (bgPreviewVideo.duration || 10).toFixed(1);
+      updateTrimInfo();
+      showToast("Durasi potongan dikembalikan ke penuh");
+    });
 
     // State Transformasi Gambar/Video Latar
     let imgState = {
@@ -671,6 +738,10 @@
       bgPreviewVideo.onloadedmetadata = () => {
         videoTimeline.max = bgPreviewVideo.duration || 10;
         videoTimeDisplay.textContent = `00:00 / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+        trimStartInput.value = "0";
+        trimEndInput.value = (bgPreviewVideo.duration || 10).toFixed(1);
+        trimEndInput.max = (bgPreviewVideo.duration || 10).toFixed(1);
+        updateTrimInfo();
         bgPreviewVideo.play();
         playIcon.className = "ph-bold ph-pause";
         btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
@@ -977,14 +1048,14 @@
       creditInput.disabled = false;
       creditInput.value = "Sumber: Twitter/X";
       previewCreditText.textContent = creditInput.value;
-      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari #INDONESIASADAR";
+      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari";
       previewHeadline.textContent = headlineInput.value;
       footerCtaInput.value = "Baca berita selengkapnya di oshitive.com";
       previewFooterCta.textContent = footerCtaInput.value;
-      manualFontSizeInput.value = 24;
-      manualFontSizeVal.textContent = "24px";
-      lineHeightSelect.value = "1.14";
-      previewHeadline.style.lineHeight = "1.14";
+      manualFontSizeInput.value = 26;
+      manualFontSizeVal.textContent = "26px";
+      lineHeightSelect.value = "1.08";
+      previewHeadline.style.lineHeight = "1.08";
       applyPrimaryColor("#4262b2");
       updateHeadline();
       showToast('Teks di-reset ke default');
@@ -1000,7 +1071,6 @@
       ctx.fillRect(0, 0, targetW, targetH);
 
       // Gambar Media Latar (Foto atau Video)
-      // Gunakan ukuran bounding box asli display agar tampilan persis 1:1 identik
       const currentMedia = mediaType === 'video' ? bgPreviewVideo : bgPreviewImg;
       const mediaW = mediaType === 'video' ? bgPreviewVideo.videoWidth : bgPreviewImg.naturalWidth;
       const mediaH = mediaType === 'video' ? bgPreviewVideo.videoHeight : bgPreviewImg.naturalHeight;
@@ -1068,7 +1138,7 @@
         const tagY = (tagRect.top - rect.top) * scaleFactor;
         const tagWidth = tagRect.width * scaleFactor;
         const tagHeight = tagRect.height * scaleFactor;
-        const tagRadius = Math.max(4, 8 * scaleFactor);
+        const tagRadius = Math.max(4, 7 * scaleFactor);
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
@@ -1110,42 +1180,45 @@
         }
 
         // Render Kotak Putih Dinamis
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = '#f8fafd';
+        ctx.fillStyle = '#f7f9fd';
         ctx.fillRect(boxX, boxY, boxW, boxH);
 
-        // Watermark polygons
+        // Watermark Shards Zigzag (Persis seperti tampilan display)
         ctx.save();
         ctx.beginPath();
         ctx.rect(boxX, boxY, boxW, boxH);
         ctx.clip();
-        ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
 
-        const shardCoords = [
-          [[boxX, boxY + boxH], [boxX + boxW * 0.2, boxY], [boxX + boxW * 0.35, boxY + boxH]],
-          [[boxX + boxW * 0.28, boxY + boxH], [boxX + boxW * 0.48, boxY], [boxX + boxW * 0.62, boxY + boxH]],
-          [[boxX + boxW * 0.58, boxY + boxH], [boxX + boxW * 0.78, boxY], [boxX + boxW * 0.92, boxY + boxH]]
+        const shardCols = [
+          { p: [[0, 0], [0.10, 1], [0.20, 0]], color: 'rgba(66, 98, 178, 0.08)' },
+          { p: [[0.15, 1], [0.26, 0], [0.36, 1]], color: 'rgba(32, 58, 125, 0.07)' },
+          { p: [[0.32, 0], [0.44, 1], [0.54, 0]], color: 'rgba(66, 98, 178, 0.09)' },
+          { p: [[0.49, 1], [0.61, 0], [0.71, 1]], color: 'rgba(32, 58, 125, 0.06)' },
+          { p: [[0.66, 0], [0.79, 1], [0.89, 0]], color: 'rgba(66, 98, 178, 0.08)' },
+          { p: [[0.84, 1], [0.95, 0], [1.00, 1]], color: 'rgba(32, 58, 125, 0.07)' }
         ];
 
-        shardCoords.forEach(poly => {
+        shardCols.forEach(s => {
+          ctx.fillStyle = s.color;
           ctx.beginPath();
-          ctx.moveTo(poly[0][0], poly[0][1]);
-          ctx.lineTo(poly[1][0], poly[1][1]);
-          ctx.lineTo(poly[2][0], poly[2][1]);
+          ctx.moveTo(boxX + s.p[0][0] * boxW, boxY + s.p[0][1] * boxH);
+          ctx.lineTo(boxX + s.p[1][0] * boxW, boxY + s.p[1][1] * boxH);
+          ctx.lineTo(boxX + s.p[2][0] * boxW, boxY + s.p[2][1] * boxH);
           ctx.closePath();
           ctx.fill();
         });
         ctx.restore();
 
-        // Border Kotak Caption
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = Math.max(2, 3.5 * scaleFactor);
+        // Border Kotak Caption (tegas & rapi)
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = Math.max(2, 3.2 * scaleFactor);
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
         // Render Teks Headline (Simetris Atas, Bawah, Kiri, Kanan)
         const computedHeadline = window.getComputedStyle(previewHeadline);
         const headlineFontSize = Math.round(parseFloat(computedHeadline.fontSize) * scaleFactor);
-        const headlineLineHeight = headlineFontSize * parseFloat(lineHeightSelect.value);
+        const lineLeading = parseFloat(lineHeightSelect.value) || 1.08;
+        const headlineLineHeight = headlineFontSize * lineLeading;
 
         ctx.font = `900 ${headlineFontSize}px Poppins, sans-serif`;
         const words = (headlineInput.value || '').split(' ');
@@ -1171,7 +1244,7 @@
 
         // Hitung vertikal tengah secara presisi
         const textTotalH = (lines.length - 1) * headlineLineHeight + headlineFontSize;
-        const textStartY = boxY + ((boxH - textTotalH) / 2) + (headlineFontSize * 0.82);
+        const textStartY = boxY + ((boxH - textTotalH) / 2) + (headlineFontSize * 0.84);
 
         ctx.fillStyle = primaryColorInput.value || '#4262b2';
         ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
@@ -1184,8 +1257,7 @@
         ctx.restore();
       }
 
-      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL (TIDAK IKUT HILANG)
-      ctx.save();
+      // 2. Render Footer Bar (OSHITIVE+ & domain) - SELALU TETAP TAMPIL
       const footY = (footerRect.top - rect.top) * scaleFactor;
       const footH = footerRect.height * scaleFactor;
       const footBaselineY = footY + (footH / 2);
@@ -1356,24 +1428,31 @@
           recorder.start();
           await bgPreviewVideo.play();
 
-          // Rekam penuh sesuai durasi asli video
-          const totalDuration = bgPreviewVideo.duration && isFinite(bgPreviewVideo.duration) && bgPreviewVideo.duration > 0
-            ? bgPreviewVideo.duration 
-            : 10;
-          
+          // Pengaturan durasi trim potongan video
+          const clipStart = Math.max(0, parseFloat(trimStartInput.value) || 0);
+          const clipEndRaw = parseFloat(trimEndInput.value);
+          const clipEnd = (clipEndRaw && clipEndRaw > clipStart) 
+            ? Math.min(clipEndRaw, bgPreviewVideo.duration || clipEndRaw) 
+            : (bgPreviewVideo.duration || 10);
+          const clipDuration = Math.max(0.5, clipEnd - clipStart);
+
+          // Pindahkan posisi video ke titik awal pemotongan
+          bgPreviewVideo.currentTime = clipStart;
+
           const progressSpan = document.getElementById('exportProgressText');
           let animationFrameId = null;
 
           function drawVideoLoop() {
             const curTime = bgPreviewVideo.currentTime;
+            const elapsed = Math.max(0, curTime - clipStart);
             
             // Tampilkan progress persentase rekaman secara realtime
             if (progressSpan) {
-              const pct = Math.min(100, Math.round((curTime / totalDuration) * 100));
-              progressSpan.textContent = `Merekam Full Video (${pct}%)...`;
+              const pct = Math.min(100, Math.max(0, Math.round((elapsed / clipDuration) * 100)));
+              progressSpan.textContent = `Merekam Video (${pct}%)...`;
             }
 
-            // Hitung opacity overlay: pudar halus setelah detik ke-5
+            // Hitung opacity overlay: pudar halus setelah detik ke-5 dari video
             let overlayOpacity = 1.0;
             if (toggleAutoFade.checked) {
               if (curTime >= 5.0) {
@@ -1383,8 +1462,8 @@
 
             renderFrame(ctx, targetW, targetH, isTiktok, overlayOpacity);
 
-            // Berhenti hanya saat video telah selesai diputar secara penuh
-            if (!bgPreviewVideo.ended && curTime < totalDuration - 0.05) {
+            // Berhenti saat video mencapai titik akhir trim atau durasi habis
+            if (!bgPreviewVideo.ended && curTime < clipEnd - 0.05) {
               animationFrameId = requestAnimationFrame(drawVideoLoop);
             } else {
               if (animationFrameId) cancelAnimationFrame(animationFrameId);
