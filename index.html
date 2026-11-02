@@ -3,1064 +3,863 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OSHITIVE News Generator</title>
+  <title>Oshitive News Post Generator</title>
+  <!-- Google Fonts: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #4262b2;
-      --primary-dark: #2f4886;
-      --bg: #0f172a;
-      --panel-bg: #1e293b;
-      --text: #f8fafc;
-      --border: #334155;
-    }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            brand: '#4262b2',
+            brandDark: '#1b3570',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
       font-family: 'Poppins', sans-serif;
     }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 16px 40px;
+    /* Poligon geometris watermark sesuai gambar template */
+    .pattern-shards {
+      background-color: #f7f9fd;
+      background-image: 
+        radial-gradient(circle at 50% 120%, rgba(66, 98, 178, 0.12), transparent 70%),
+        linear-gradient(115deg, transparent 40%, rgba(66, 98, 178, 0.08) 40%, rgba(66, 98, 178, 0.08) 50%, transparent 50%),
+        linear-gradient(240deg, transparent 35%, rgba(66, 98, 178, 0.1) 35%, rgba(66, 98, 178, 0.1) 48%, transparent 48%),
+        linear-gradient(70deg, transparent 60%, rgba(66, 98, 178, 0.07) 60%, rgba(66, 98, 178, 0.07) 72%, transparent 72%),
+        linear-gradient(190deg, transparent 20%, rgba(66, 98, 178, 0.08) 20%, rgba(66, 98, 178, 0.08) 32%, transparent 32%);
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    header h1 {
-      font-size: 26px;
-      font-weight: 800;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    header h1 span {
-      background: var(--primary);
-      padding: 2px 10px;
-      border-radius: 6px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1220px;
-      display: grid;
-      grid-template-columns: 1fr 440px;
-      gap: 28px;
-      align-items: start;
-    }
-
-    @media (max-width: 960px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Workspace / Preview Frame */
-    .preview-card {
-      background: var(--panel-bg);
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      border: 1px solid var(--border);
-    }
-
-    .canvas-wrapper {
-      position: relative;
-      width: 100%;
-      max-width: 580px;
-      aspect-ratio: 1 / 1;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-      user-select: none;
-      touch-action: none;
-    }
-
-    /* Interactive Artboard */
-    #artboard {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
-      background-color: #2b742e;
-    }
-
-    /* Layer 1: Background Image & Interactive Bounding Box */
-    .image-transform-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: 0 0;
-      cursor: grab;
-      display: inline-block;
-      user-select: none;
-    }
-
-    .image-transform-container:active {
-      cursor: grabbing;
-    }
-
-    .image-transform-container img {
-      display: block;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    /* Resize Handles */
-    .resize-handle {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      background: #ffffff;
-      border: 3px solid var(--primary);
-      border-radius: 50%;
-      z-index: 10;
-      box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    }
-    .handle-nw { top: -9px; left: -9px; cursor: nwse-resize; }
-    .handle-ne { top: -9px; right: -9px; cursor: nesw-resize; }
-    .handle-sw { bottom: -9px; left: -9px; cursor: nesw-resize; }
-    .handle-se { bottom: -9px; right: -9px; cursor: nwse-resize; }
-
-    .transform-outline {
-      position: absolute;
-      inset: 0;
-      border: 2px dashed rgba(255, 255, 255, 0.7);
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-
-    /* Layer 2: Gradient Overlay (from image_2ff225.jpg) */
-    .overlay-gradient {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(0, 0, 0, 0) 35%,
-        rgba(41, 66, 133, 0.45) 55%,
-        #3b58a2 72%,
-        #354f94 100%
-      );
-      mix-blend-mode: normal;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* Layer 3: Top Row Badges (Tag & Credit) */
-    .meta-row {
-      position: absolute;
-      bottom: 37.8%;
-      left: 5%;
-      right: 5%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .tag-badge {
-      background: #ffffff;
-      color: #3b5998;
-      font-weight: 800;
-      font-size: 14px;
-      padding: 5px 16px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      letter-spacing: 0.5px;
-    }
-
-    .credit-badge {
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .credit-badge.hidden {
-      display: none;
-    }
-
-    /* Layer 4: News Caption Frame */
-    .caption-box {
-      position: absolute;
-      bottom: 9.8%;
-      left: 5%;
-      width: 90%;
-      height: 27%;
-      background: #ffffff;
-      border: 3px solid #111;
-      border-radius: 6px;
-      z-index: 4;
-      padding: 14px 18px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-    }
-
-    /* Geometric subtle background pattern inside box */
-    .caption-box::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(240,244,255,0.7) 0%, rgba(255,255,255,0.95) 100%),
-                  repeating-linear-gradient(60deg, transparent, transparent 30px, rgba(66,98,178,0.06) 30px, rgba(66,98,178,0.06) 60px);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .caption-text {
-      position: relative;
-      z-index: 1;
-      font-weight: 800;
-      color: var(--primary);
-      line-height: 1.15;
-      letter-spacing: -0.5px;
-      text-align: left;
-      word-break: break-word;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      width: 100%;
-    }
-
-    /* Layer 5: Footer Elements */
-    .footer-bar {
-      position: absolute;
-      bottom: 2.8%;
-      left: 5%;
-      width: 90%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
-      font-weight: 800;
-      font-size: 13px;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      letter-spacing: 0.5px;
-      font-size: 15px;
-    }
-
-    .dot-line {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .dot-line::before {
-      content: "";
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #fff;
-      margin-left: 6px;
-    }
-
-    .dot-line::after {
-      content: "";
-      display: inline-block;
-      height: 2.5px;
-      width: 60px;
-      background: #fff;
-    }
-
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      opacity: 0.95;
-    }
-
-    .footer-right .line {
-      height: 2.5px;
-      width: 65px;
-      background: #fff;
-    }
-
-    .footer-right .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #fff;
-    }
-
-    /* Controls Panel */
-    .control-panel {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
-
-    .section-title {
-      font-size: 15px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #94a3b8;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      margin-bottom: 4px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .form-group label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #cbd5e1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 10px 14px;
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus, textarea:focus {
-      border-color: var(--primary);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 85px;
-    }
-
-    .file-input-wrapper {
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-      width: 100%;
-    }
-
-    .btn-upload {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px;
-      background: #334155;
-      border: 2px dashed #64748b;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-upload:hover {
-      background: #475569;
-      border-color: var(--primary);
-    }
-
-    .file-input-wrapper input[type="file"] {
-      position: absolute;
-      left: 0;
-      top: 0;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-    }
-
-    /* Switch toggles */
-    .switch-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 24px;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background-color: #475569;
-      transition: .3s;
-      border-radius: 24px;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider {
-      background-color: var(--primary);
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(20px);
-    }
-
-    .btn-download {
-      background: linear-gradient(135deg, #4262b2, #294285);
-      color: #fff;
-      border: none;
-      padding: 14px;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 4px 14px rgba(66,98,178,0.4);
-    }
-
-    .btn-download:hover {
-      background: linear-gradient(135deg, #4d71cd, #33509e);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: #334155;
-      color: #e2e8f0;
-      border: none;
-      padding: 9px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background: #475569;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tip-box {
-      font-size: 11px;
-      color: #94a3b8;
-      background: #0f172a;
-      padding: 10px;
-      border-radius: 6px;
-      line-height: 1.4;
-      border-left: 3px solid var(--primary);
+    input[type=range] {
+      accent-color: #4262b2;
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased select-none">
 
-  <header>
-    <h1><span>OSHITIVE</span> NEWS GENERATOR</h1>
-  </header>
-
-  <div class="container">
-    <!-- Visual Output Frame -->
-    <div class="preview-card">
-      <div class="canvas-wrapper" id="canvasWrapper">
-        <div id="artboard">
-          <!-- Background image layer with transform controls -->
-          <div class="image-transform-container" id="imageTransformBox">
-            <img id="bgImage" src="image_2ff242.jpg" alt="Background" />
-            <div class="transform-outline" id="transformOutline"></div>
-            <div class="resize-handle handle-nw" data-handle="nw"></div>
-            <div class="resize-handle handle-ne" data-handle="ne"></div>
-            <div class="resize-handle handle-sw" data-handle="sw"></div>
-            <div class="resize-handle handle-se" data-handle="se"></div>
-          </div>
-
-          <!-- Bottom Gradient Mask -->
-          <div class="overlay-gradient"></div>
-
-          <!-- Top Meta Row: TAG & CREDIT (Sejajar Horisontal) -->
-          <div class="meta-row">
-            <div class="tag-badge" id="previewTag">JKT48</div>
-            <div class="credit-badge" id="previewCredit">
-              <span id="creditIcon">📸</span>
-              <span id="previewCreditText">Sumber: Twitter/X</span>
-            </div>
-          </div>
-
-          <!-- Caption Box -->
-          <div class="caption-box" id="captionBox">
-            <div class="caption-text" id="previewCaption">
-              Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
-            </div>
-          </div>
-
-          <!-- Footer elements -->
-          <div class="footer-bar">
-            <div class="footer-left">
-              <span>OSHITIVE+</span>
-              <div class="dot-line"></div>
-            </div>
-            <div class="footer-right">
-              <div class="line"></div>
-              <div class="dot"></div>
-              <span id="previewFooterDomain">Baca berita selengkapnya di oshitive.com</span>
-            </div>
-          </div>
-        </div>
+  <!-- Header Bar -->
+  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4262b2] to-blue-400 flex items-center justify-center font-black text-lg text-white shadow-lg shadow-blue-500/20">
+        O+
       </div>
-      <p style="margin-top: 14px; font-size: 12px; color: #94a3b8;">
-        💡 <em>Drag</em> gambar untuk geser, atau tarik <strong>lingkaran di sudut gambar</strong> untuk zoom in/out.
-      </p>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+          OSHITIVE <span class="text-[11px] bg-blue-600/30 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">Auto News Gen</span>
+        </h1>
+      </div>
     </div>
 
-    <!-- Controls Panel -->
-    <div class="control-panel">
-      <div class="section-title">Konten & Teks</div>
-
-      <div class="form-group">
-        <label for="inputTag">Tag Berita (Kiri)</label>
-        <input type="text" id="inputTag" value="JKT48" placeholder="Contoh: JKT48, AKB48, SINGLE">
-      </div>
-
-      <!-- Credit / Sumber Controls -->
-      <div class="form-group">
-        <div class="switch-container">
-          <label style="cursor: pointer;" for="toggleCredit">Tampilkan Sumber / Credit (Kanan)</label>
-          <label class="switch">
-            <input type="checkbox" id="toggleCredit" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-        <input type="text" id="inputCredit" value="Sumber: Twitter/X" placeholder="Contoh: Sumber: @officialJKT48">
-      </div>
-
-      <!-- Caption Berita & Auto-Fit -->
-      <div class="form-group">
-        <div class="switch-container">
-          <label for="inputCaption">Judul / Caption Berita</label>
-          <span style="font-size: 11px; color: #38bdf8; font-weight: 700;">AUTO-FIT AKTIF</span>
-        </div>
-        <textarea id="inputCaption" placeholder="Ketik headline berita...">Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari</textarea>
-      </div>
-
-      <div class="section-title">Gambar Latar & Orientasi</div>
-
-      <div class="form-group">
-        <div class="file-input-wrapper">
-          <button class="btn-upload">📁 Upload Gambar Baru</button>
-          <input type="file" id="inputImageUpload" accept="image/*">
-        </div>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn-secondary" id="btnResetTransform" style="flex: 1;">↺ Reset Ukuran & Posisi</button>
-        <button class="btn-secondary" id="btnToggleOutline" style="flex: 1;">👁 Toggle Bounding Box</button>
-      </div>
-
-      <div class="tip-box">
-        <strong>Auto-Fit Akurat:</strong> Teks berita dihitung dan disesuaikan ukurannya secara instan ke batas aman kotak putih sehingga tampilan headline selalu padat, rapi, dan tidak memotong frame.
-      </div>
-
-      <button class="btn-download" id="btnDownload">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        Download Hasil (1080x1080 HD)
+    <div class="flex items-center gap-3">
+      <button id="downloadBtn" class="flex items-center gap-2 bg-[#4262b2] hover:bg-blue-600 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer">
+        <i class="ph-bold ph-download-simple text-base"></i>
+        <span>Download PNG (1080p)</span>
       </button>
     </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- Controls Sidebar (Left: 5 cols) -->
+    <div class="lg:col-span-5 flex flex-col gap-4 order-2 lg:order-1">
+      
+      <!-- Panel Input & Kontrol Gambar Latar -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="ph-bold ph-image text-[#4262b2]"></i> Gambar Latar & Posisi
+          </label>
+          <button id="resetTransformBtn" class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer">
+            <i class="ph-bold ph-arrows-counter-clockwise"></i> Reset Posisi
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <!-- File Drop/Upload Area -->
+          <div class="grid grid-cols-2 gap-2">
+            <label class="border-2 border-dashed border-slate-700 hover:border-[#4262b2] rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-900/50 hover:bg-slate-800/40 transition-colors group">
+              <input type="file" id="imageInput" accept="image/*" class="hidden">
+              <i class="ph-bold ph-upload-simple text-xl text-slate-400 group-hover:text-blue-400 mb-0.5 transition-colors"></i>
+              <span class="text-[11px] font-semibold text-slate-300 group-hover:text-white">Pilih File Foto</span>
+            </label>
+
+            <!-- URL Input -->
+            <div class="flex flex-col justify-center gap-1 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 font-semibold">Atau Tempel URL:</span>
+              <div class="flex gap-1">
+                <input type="text" id="imageUrlInput" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
+                <button id="applyUrlBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-bold"><i class="ph-bold ph-arrow-right"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Petunjuk Drag Geser -->
+          <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-2.5 flex items-center gap-2.5 text-blue-200 text-xs">
+            <i class="ph-fill ph-hand-grabbing text-base text-blue-400 flex-shrink-0"></i>
+            <span><strong>Transform Langsung:</strong> Tarik titik ujung/sudut gambar (handle) untuk memperbesar/memperkecil, atau drag badan gambar untuk menggeser.</span>
+          </div>
+
+          <!-- Image Zoom Slider -->
+          <div class="pt-1">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Zoom Gambar</span>
+              <span id="zoomVal" class="font-mono text-blue-400 font-semibold">100%</span>
+            </div>
+            <input type="range" id="zoomInput" min="20" max="350" value="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Konten Teks & Auto Sizing -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3.5">
+        
+        <!-- Tag & Credit / Sumber Row Controls -->
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1">
+                <i class="ph-bold ph-tag text-[#4262b2]"></i> Tag Berita (Kiri)
+              </label>
+              <input type="text" id="tagInput" value="JKT48" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-[#4262b2]">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Warna Badge</label>
+              <div class="flex items-center gap-2">
+                <input type="color" id="primaryColorInput" value="#4262b2" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0">
+                <input type="text" id="primaryColorHex" value="#4262b2" class="w-full uppercase font-mono text-xs bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+              </div>
+            </div>
+          </div>
+
+          <!-- Credit / Sumber Controls (Sejajar Kanan) -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i class="ph-bold ph-camera text-[#4262b2]"></i> Sumber / Credit (Kanan)
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="toggleCredit" checked class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0">
+                <span class="text-[11px] font-semibold text-blue-300">Tampilkan</span>
+              </label>
+            </div>
+            <input type="text" id="creditInput" value="Sumber: Twitter/X" placeholder="Contoh: Sumber: @officialJKT48" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#4262b2]">
+          </div>
+        </div>
+
+        <!-- Headline Caption Input & Auto Resize Engine -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i class="ph-bold ph-text-t text-[#4262b2]"></i> Teks Caption / Headline
+            </label>
+            <span class="text-[11px] font-semibold text-blue-300 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-lg">
+              Latar Adaptif Otomatis
+            </span>
+          </div>
+
+          <textarea id="headlineInput" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-[#4262b2] leading-relaxed">Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari</textarea>
+
+          <!-- Slider Ukuran Font Teks -->
+          <div id="manualFontContainer" class="pt-2">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Ukuran Font Headline:</span>
+              <span id="manualFontSizeVal" class="font-mono text-blue-400">24px</span>
+            </div>
+            <input type="range" id="manualFontSizeInput" min="16" max="38" value="24" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          </div>
+        </div>
+
+        <!-- Line Height -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Jarak Baris (Leading)</label>
+            <select id="lineHeightSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#4262b2]">
+              <option value="1.05">Sangat Rapat (1.05)</option>
+              <option value="1.14" selected>Normal Rapat (1.14)</option>
+              <option value="1.25">Sedang (1.25)</option>
+              <option value="1.35">Renggang (1.35)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Rata Teks</label>
+            <select id="textAlignSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+              <option value="left" selected>Rata Kiri</option>
+              <option value="center">Rata Tengah</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Footer Text Controls -->
+        <div class="pt-2 border-t border-slate-800 space-y-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">Footer Teks Kanan</label>
+            <input type="text" id="footerCta" value="Baca berita selengkapnya di oshitive.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Preview Canvas (Right: 7 cols) -->
+    <div class="lg:col-span-7 flex flex-col items-center order-1 lg:order-2">
+      
+      <div class="w-full flex items-center justify-between mb-2 px-1">
+        <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+          <i class="ph-bold ph-eye text-blue-400"></i> Interactive Canvas (Bisa digeser & di-zoom)
+        </span>
+        <button id="resetSampleBtn" class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer">
+          <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset Teks
+        </button>
+      </div>
+
+      <!-- Wrapper Preview Responsif -->
+      <div class="w-full max-w-[550px] aspect-square flex items-center justify-center bg-slate-950/80 border border-slate-800 rounded-2xl p-2 sm:p-3 shadow-2xl">
+        
+        <!-- CARD UTAMA PREVIEW (1:1 Ratio) -->
+        <div id="captureArea" class="relative w-full aspect-square overflow-hidden bg-slate-800 shadow-2xl flex flex-col justify-end touch-none select-none">
+          
+          <!-- Layer 1: Background Canvas / Image Container (Draggable & Zoomable with Corner Handles) -->
+          <div id="bgLayerContainer" class="absolute inset-0 z-0 overflow-hidden bg-[#192b52]">
+            <!-- Bounding Box Wrapper for image + interactive corner transform handles -->
+            <div id="imageTransformBox" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-move origin-center group touch-none" style="width: 100%; height: 100%;">
+              <img id="bgPreviewImg" 
+                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80" 
+                   alt="News Background" 
+                   draggable="false"
+                   class="w-full h-full object-cover select-none pointer-events-none">
+              
+              <!-- Active Bounding Border Indicator -->
+              <div id="transformBorder" class="absolute inset-0 border-2 border-dashed border-blue-400/80 group-hover:border-blue-400 pointer-events-none transition-opacity duration-150"></div>
+
+              <!-- 4 Corner Resize Handles (Tarikan Ujung Gambar) -->
+              <div class="corner-handle absolute -top-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nwse-resize hover:scale-125 transition-transform z-30" data-handle="top-left"></div>
+              <div class="corner-handle absolute -top-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="top-right"></div>
+              <div class="corner-handle absolute -bottom-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nesw-resize hover:scale-125 transition-transform z-30" data-handle="bottom-left"></div>
+              <div class="corner-handle absolute -bottom-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-[#4262b2] rounded-full shadow-lg cursor-nwse-resize hover:scale-125 transition-transform z-30" data-handle="bottom-right"></div>
+            </div>
+          </div>
+
+          <!-- Petunjuk visual drag & zoom saat hover pada gambar -->
+          <div class="absolute top-3 right-3 z-10 pointer-events-none bg-black/50 backdrop-blur px-2.5 py-1 rounded-full text-[10px] text-white/80 font-medium flex items-center gap-1">
+            <i class="ph-bold ph-arrows-out-cardinal"></i> Tarik ujung untuk resize
+          </div>
+
+          <!-- Layer 2: Gradient Halus Transisi ke Bawah -->
+          <div class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent via-40% to-[#4262b2] opacity-90"></div>
+          
+          <!-- Layer 2.1: Bagian Solid Biru Bawah (#4262b2) -->
+          <div class="absolute bottom-0 left-0 right-0 h-[38%] z-10 pointer-events-none bg-[#4262b2]" id="solidBottomBg"></div>
+
+          <!-- Layer 3: Konten Box Berita & Footer (Bottom-anchored dynamic stack) -->
+          <div class="relative z-20 w-full px-5 pb-5 sm:px-7 sm:pb-6 flex flex-col justify-end pointer-events-none">
+            
+            <!-- Dynamic Floating Group: Meta Badges + Caption Box (Menempel dan tumbuh ke atas dari footer) -->
+            <div class="w-full flex flex-col justify-end pointer-events-auto">
+              
+              <!-- Meta Badges Row: Tag (Kiri) & Credit / Sumber (Kanan) Sejajar di Puncak Box -->
+              <div id="metaRowContainer" class="w-full mb-2 flex items-center justify-between">
+                <!-- Tag Badge -->
+                <span id="previewTag" class="inline-block bg-white text-[#4262b2] font-black tracking-tight text-xs sm:text-[13px] px-3.5 py-0.5 sm:py-1 rounded-lg shadow-md border border-white/80 uppercase">
+                  JKT48
+                </span>
+
+                <!-- Credit / Sumber Badge (Bisa di-toggle ON/OFF) -->
+                <div id="previewCreditBadge" class="bg-black/60 backdrop-blur-sm border border-white/30 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md flex items-center gap-1.5 uppercase tracking-wide">
+                  <i class="ph-bold ph-camera text-[11px] text-blue-300"></i>
+                  <span id="previewCreditText">Sumber: Twitter/X</span>
+                </div>
+              </div>
+
+              <!-- News Caption Card Box: TINGGI OTOMATIS MENGIKUTI TEKS (H-AUTO) -->
+              <div id="captionCardBox" class="w-full rounded-none border border-slate-900 shadow-2xl overflow-hidden pattern-shards relative p-3.5 sm:p-5 h-auto transition-all duration-200">
+                
+                <!-- SVG Low-Poly Shard Watermark Background -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]" preserveAspectRatio="none" viewBox="0 0 600 240" fill="none">
+                  <polygon points="40,240 120,40 180,240" fill="#4262b2" />
+                  <polygon points="170,240 260,0 330,240" fill="#4262b2" />
+                  <polygon points="310,240 400,20 480,240" fill="#4262b2" />
+                  <polygon points="460,240 540,60 610,240" fill="#4262b2" />
+                  <polygon points="0,180 80,0 140,200" fill="#203a7d" />
+                  <polygon points="220,240 310,40 370,240" fill="#203a7d" />
+                </svg>
+
+                <!-- Dynamic Headline Text -->
+                <div id="headlineWrapper" class="relative z-10 w-full">
+                  <h2 id="previewHeadline" 
+                      class="font-poppins font-black text-left w-full leading-[1.14] select-text" 
+                      style="color: #4262b2; font-size: 24px; letter-spacing: -0.025em; word-break: break-word;">
+                    Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari
+                  </h2>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer Branding & Pin Line Sambung (Tetap konsisten di posisi bawah) -->
+            <div class="w-full mt-3.5 sm:mt-4 flex items-center justify-between text-white text-[10px] sm:text-[12px] font-bold">
+              
+              <!-- Brand Title Kiri -->
+              <div id="previewBrand" class="tracking-wider uppercase font-black text-xs sm:text-sm pr-1">
+                OSHITIVE+
+              </div>
+
+              <!-- Connected Pin Bar -->
+              <div class="flex-1 mx-2 sm:mx-3 flex items-center">
+                <span class="w-2 h-2 rounded-full border-2 border-white bg-transparent flex-shrink-0"></span>
+                <span class="flex-1 h-[2px] bg-white/95"></span>
+                <span class="w-2 h-2 rounded-full border-2 border-white bg-transparent flex-shrink-0"></span>
+              </div>
+
+              <!-- CTA Kanan -->
+              <div id="previewFooterCta" class="font-bold tracking-tight text-right pl-1 truncate">
+                Baca berita selengkapnya di oshitive.com
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
+    <i class="ph-bold ph-check-circle text-lg"></i>
+    <span id="toastMsg" class="text-xs font-semibold">Berhasil</span>
   </div>
 
-  <!-- Hidden 1080p canvas for exporting -->
-  <canvas id="exportCanvas" width="1080" height="1080" style="display: none;"></canvas>
-
   <script>
-    // State Transformasi Gambar
+    // State Transformasi Gambar Latar
     let imgState = {
+      scale: 1.0,
       x: 0,
       y: 0,
-      scale: 1,
-      baseWidth: 0,
-      baseHeight: 0
+      mode: null, // 'drag' | 'resize'
+      handle: null,
+      startX: 0,
+      startY: 0,
+      initialScale: 1.0,
+      initialDist: 0,
+      centerX: 0,
+      centerY: 0
     };
 
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let initialImgX = 0;
-    let initialImgY = 0;
-
-    let isResizing = false;
-    let activeHandle = null;
-    let resizeStartMouseX = 0;
-    let resizeStartScale = 1;
-
-    // Elements
-    const canvasWrapper = document.getElementById('canvasWrapper');
+    // DOM Elements
+    const captureArea = document.getElementById('captureArea');
+    const bgLayerContainer = document.getElementById('bgLayerContainer');
     const imageTransformBox = document.getElementById('imageTransformBox');
-    const bgImage = document.getElementById('bgImage');
-    const transformOutline = document.getElementById('transformOutline');
-    const handles = document.querySelectorAll('.resize-handle');
+    const bgPreviewImg = document.getElementById('bgPreviewImg');
+    const transformBorder = document.getElementById('transformBorder');
+    const cornerHandles = document.querySelectorAll('.corner-handle');
 
-    const inputTag = document.getElementById('inputTag');
+    const imageInput = document.getElementById('imageInput');
+    const imageUrlInput = document.getElementById('imageUrlInput');
+    const applyUrlBtn = document.getElementById('applyUrlBtn');
+    const zoomInput = document.getElementById('zoomInput');
+    const zoomVal = document.getElementById('zoomVal');
+    const resetTransformBtn = document.getElementById('resetTransformBtn');
+
+    const tagInput = document.getElementById('tagInput');
     const previewTag = document.getElementById('previewTag');
+    const primaryColorInput = document.getElementById('primaryColorInput');
+    const primaryColorHex = document.getElementById('primaryColorHex');
+    const solidBottomBg = document.getElementById('solidBottomBg');
 
     const toggleCredit = document.getElementById('toggleCredit');
-    const inputCredit = document.getElementById('inputCredit');
-    const previewCredit = document.getElementById('previewCredit');
+    const creditInput = document.getElementById('creditInput');
+    const previewCreditBadge = document.getElementById('previewCreditBadge');
     const previewCreditText = document.getElementById('previewCreditText');
 
-    const inputCaption = document.getElementById('inputCaption');
-    const captionBox = document.getElementById('captionBox');
-    const previewCaption = document.getElementById('previewCaption');
+    const headlineInput = document.getElementById('headlineInput');
+    const previewHeadline = document.getElementById('previewHeadline');
+    const captionCardBox = document.getElementById('captionCardBox');
+    const headlineWrapper = document.getElementById('headlineWrapper');
+    const manualFontSizeInput = document.getElementById('manualFontSizeInput');
+    const manualFontSizeVal = document.getElementById('manualFontSizeVal');
+    const lineHeightSelect = document.getElementById('lineHeightSelect');
+    const textAlignSelect = document.getElementById('textAlignSelect');
 
-    const inputImageUpload = document.getElementById('inputImageUpload');
-    const btnResetTransform = document.getElementById('btnResetTransform');
-    const btnToggleOutline = document.getElementById('btnToggleOutline');
-    const btnDownload = document.getElementById('btnDownload');
-    const exportCanvas = document.getElementById('exportCanvas');
+    const footerCtaInput = document.getElementById('footerCta');
+    const previewFooterCta = document.getElementById('previewFooterCta');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetSampleBtn = document.getElementById('resetSampleBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
 
-    // 1. Inisialisasi Gambar Latar
-    function initializeImage() {
-      if (bgImage.naturalWidth > 0) {
-        setupInitialImageScale();
-      } else {
-        bgImage.onload = () => setupInitialImageScale();
-      }
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
     }
 
-    function setupInitialImageScale() {
-      const artboardWidth = canvasWrapper.clientWidth;
-      const artboardHeight = canvasWrapper.clientHeight;
-
-      imgState.baseWidth = bgImage.naturalWidth;
-      imgState.baseHeight = bgImage.naturalHeight;
-
-      // Fit cover scale
-      const scaleX = artboardWidth / imgState.baseWidth;
-      const scaleY = artboardHeight / imgState.baseHeight;
-      imgState.scale = Math.max(scaleX, scaleY);
-
-      // Center image
-      imgState.x = (artboardWidth - (imgState.baseWidth * imgState.scale)) / 2;
-      imgState.y = (artboardHeight - (imgState.baseHeight * imgState.scale)) / 4; // sedikit naik ke atas
-
-      applyTransform();
+    // --- 1. INTERACTIVE TRANSFORM: DRAG & CORNER RESIZE HANDLES ---
+    function renderImageTransform() {
+      imageTransformBox.style.transform = `translate(calc(-50% + ${imgState.x}px), calc(-50% + ${imgState.y}px)) scale(${imgState.scale})`;
+      zoomVal.textContent = Math.round(imgState.scale * 100) + '%';
+      zoomInput.value = Math.round(imgState.scale * 100);
     }
 
-    function applyTransform() {
-      imageTransformBox.style.transform = `translate(${imgState.x}px, ${imgState.y}px) scale(${imgState.scale})`;
-    }
+    // Dragging the main image body
+    imageTransformBox.addEventListener('pointerdown', (e) => {
+      // Jika yang ditekan adalah corner handle, abaikan handler drag body
+      if (e.target.classList.contains('corner-handle')) return;
 
-    // 2. Drag / Geser Badan Gambar
-    imageTransformBox.addEventListener('mousedown', (e) => {
-      if (e.target.classList.contains('resize-handle')) return;
-      isDragging = true;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      initialImgX = imgState.x;
-      initialImgY = imgState.y;
-      e.preventDefault();
+      imgState.mode = 'drag';
+      imgState.startX = e.clientX - imgState.x;
+      imgState.startY = e.clientY - imgState.y;
+      imageTransformBox.setPointerCapture(e.pointerId);
     });
 
-    window.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        const dx = e.clientX - dragStartX;
-        const dy = e.clientY - dragStartY;
-        imgState.x = initialImgX + dx;
-        imgState.y = initialImgY + dy;
-        applyTransform();
-      } else if (isResizing) {
-        const deltaX = (e.clientX - resizeStartMouseX);
-        const directionFactor = (activeHandle === 'se' || activeHandle === 'ne') ? 1 : -1;
-        const scaleDelta = (deltaX * directionFactor) / 250;
-        
-        let newScale = resizeStartScale + scaleDelta;
-        if (newScale < 0.15) newScale = 0.15;
-        if (newScale > 4) newScale = 4;
-
-        imgState.scale = newScale;
-        applyTransform();
-      }
-    });
-
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-      isResizing = false;
-    });
-
-    // Handle Resize Sudut (Corner Pulls)
-    handles.forEach(handle => {
-      handle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        activeHandle = handle.dataset.handle;
-        resizeStartMouseX = e.clientX;
-        resizeStartScale = imgState.scale;
+    // Corner handle resize (tarikan ujung gambar untuk zoom in / zoom out)
+    cornerHandles.forEach(handle => {
+      handle.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
-        e.preventDefault();
+        imgState.mode = 'resize';
+        imgState.handle = handle.dataset.handle;
+        
+        const boxRect = imageTransformBox.getBoundingClientRect();
+        imgState.centerX = boxRect.left + boxRect.width / 2;
+        imgState.centerY = boxRect.top + boxRect.height / 2;
+        imgState.initialDist = Math.hypot(e.clientX - imgState.centerX, e.clientY - imgState.centerY);
+        imgState.initialScale = imgState.scale;
+        
+        handle.setPointerCapture(e.pointerId);
+      });
+
+      handle.addEventListener('pointermove', (e) => {
+        if (imgState.mode !== 'resize') return;
+        const currentDist = Math.hypot(e.clientX - imgState.centerX, e.clientY - imgState.centerY);
+        if (imgState.initialDist > 0) {
+          const ratio = currentDist / imgState.initialDist;
+          const newScale = Math.min(Math.max(imgState.initialScale * ratio, 0.2), 4.0);
+          imgState.scale = newScale;
+          renderImageTransform();
+        }
+      });
+
+      handle.addEventListener('pointerup', (e) => {
+        if (imgState.mode === 'resize') {
+          imgState.mode = null;
+          handle.releasePointerCapture(e.pointerId);
+        }
+      });
+      handle.addEventListener('pointercancel', (e) => {
+        if (imgState.mode === 'resize') {
+          imgState.mode = null;
+          handle.releasePointerCapture(e.pointerId);
+        }
       });
     });
 
-    // Touch Support for Mobile
-    imageTransformBox.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        if (e.target.classList.contains('resize-handle')) {
-          isResizing = true;
-          activeHandle = e.target.dataset.handle;
-          resizeStartMouseX = e.touches[0].clientX;
-          resizeStartScale = imgState.scale;
-        } else {
-          isDragging = true;
-          dragStartX = e.touches[0].clientX;
-          dragStartY = e.touches[0].clientY;
-          initialImgX = imgState.x;
-          initialImgY = imgState.y;
-        }
+    // Pointer Move & Up untuk Image Dragging
+    imageTransformBox.addEventListener('pointermove', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.x = e.clientX - imgState.startX;
+        imgState.y = e.clientY - imgState.startY;
+        renderImageTransform();
       }
+    });
+
+    imageTransformBox.addEventListener('pointerup', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.mode = null;
+        imageTransformBox.releasePointerCapture(e.pointerId);
+      }
+    });
+
+    imageTransformBox.addEventListener('pointercancel', (e) => {
+      if (imgState.mode === 'drag') {
+        imgState.mode = null;
+        imageTransformBox.releasePointerCapture(e.pointerId);
+      }
+    });
+
+    // Zoom via Mouse Wheel di atas container
+    bgLayerContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomStep = e.deltaY < 0 ? 0.08 : -0.08;
+      imgState.scale = Math.min(Math.max(imgState.scale + zoomStep, 0.2), 4.0);
+      renderImageTransform();
     }, { passive: false });
 
-    window.addEventListener('touchmove', (e) => {
-      if (isDragging && e.touches.length === 1) {
-        const dx = e.touches[0].clientX - dragStartX;
-        const dy = e.touches[0].clientY - dragStartY;
-        imgState.x = initialImgX + dx;
-        imgState.y = initialImgY + dy;
-        applyTransform();
-      } else if (isResizing && e.touches.length === 1) {
-        const deltaX = (e.touches[0].clientX - resizeStartMouseX);
-        const factor = (activeHandle === 'se' || activeHandle === 'ne') ? 1 : -1;
-        let newScale = resizeStartScale + (deltaX * factor) / 200;
-        if (newScale >= 0.15 && newScale <= 4) {
-          imgState.scale = newScale;
-          applyTransform();
-        }
-      }
+    // Zoom via Slider
+    zoomInput.addEventListener('input', (e) => {
+      imgState.scale = parseFloat(e.target.value) / 100;
+      renderImageTransform();
     });
 
-    window.addEventListener('touchend', () => {
-      isDragging = false;
-      isResizing = false;
+    // Reset Posisi & Zoom
+    resetTransformBtn.addEventListener('click', () => {
+      imgState.x = 0;
+      imgState.y = 0;
+      imgState.scale = 1.0;
+      renderImageTransform();
+      showToast('Posisi & ukuran gambar di-reset');
     });
 
-    // 3. Algoritma Presisi Auto-Fit Teks Caption
-    function fitHeadlineText() {
-      const text = inputCaption.value.trim();
-      previewCaption.innerText = text;
-
-      if (!text) return;
-
-      const boxWidth = captionBox.clientWidth - 36;  // padding kiri+kanan
-      const boxHeight = captionBox.clientHeight - 24; // padding atas+bawah
-
-      let low = 14;
-      let high = 56;
-      let optimalSize = low;
-
-      // Binary search untuk mencari ukuran font maksimal yang muat
-      for (let i = 0; i < 7; i++) {
-        let mid = (low + high) / 2;
-        previewCaption.style.fontSize = mid + 'px';
-        previewCaption.style.lineHeight = '1.16';
-
-        const overflows = 
-          previewCaption.scrollHeight > boxHeight || 
-          previewCaption.scrollWidth > boxWidth;
-
-        if (overflows) {
-          high = mid - 1;
-        } else {
-          optimalSize = mid;
-          low = mid + 1;
-        }
-      }
-
-      previewCaption.style.fontSize = Math.floor(optimalSize) + 'px';
-    }
-
-    // 4. Sinkronisasi Konten & Toggle
-    inputTag.addEventListener('input', () => {
-      previewTag.innerText = inputTag.value.toUpperCase() || 'JKT48';
-    });
-
-    inputCredit.addEventListener('input', () => {
-      previewCreditText.innerText = inputCredit.value || 'Sumber: Twitter/X';
-    });
-
-    toggleCredit.addEventListener('change', () => {
-      if (toggleCredit.checked) {
-        previewCredit.classList.remove('hidden');
-        inputCredit.disabled = false;
-      } else {
-        previewCredit.classList.add('hidden');
-        inputCredit.disabled = true;
-      }
-    });
-
-    inputCaption.addEventListener('input', fitHeadlineText);
-
-    // Upload Gambar Baru
-    inputImageUpload.addEventListener('change', (e) => {
+    // Ganti Gambar Latar
+    imageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          bgImage.src = event.target.result;
-          bgImage.onload = () => {
-            setupInitialImageScale();
-          };
+          bgPreviewImg.src = event.target.result;
+          imgState.x = 0;
+          imgState.y = 0;
+          imgState.scale = 1.0;
+          renderImageTransform();
+          showToast('Gambar baru diterapkan!');
         };
         reader.readAsDataURL(file);
       }
     });
 
-    btnResetTransform.addEventListener('click', setupInitialImageScale);
-
-    let outlineVisible = true;
-    btnToggleOutline.addEventListener('click', () => {
-      outlineVisible = !outlineVisible;
-      transformOutline.style.display = outlineVisible ? 'block' : 'none';
-      handles.forEach(h => h.style.display = outlineVisible ? 'block' : 'none');
+    applyUrlBtn.addEventListener('click', () => {
+      const url = imageUrlInput.value.trim();
+      if (url) {
+        bgPreviewImg.crossOrigin = "anonymous";
+        bgPreviewImg.src = url;
+        imgState.x = 0;
+        imgState.y = 0;
+        imgState.scale = 1.0;
+        renderImageTransform();
+        showToast('Gambar dari URL dimuat!');
+      }
     });
 
-    window.addEventListener('resize', () => {
-      fitHeadlineText();
+    // --- 2. ENGINE DYNAMIC HEIGHT CAPTION & SYNC ---
+    function updateHeadline() {
+      previewHeadline.textContent = headlineInput.value || 'Ketik Judul Berita Di Sini';
+      previewHeadline.style.fontSize = `${manualFontSizeInput.value}px`;
+    }
+
+    headlineInput.addEventListener('input', updateHeadline);
+
+    manualFontSizeInput.addEventListener('input', (e) => {
+      manualFontSizeVal.textContent = `${e.target.value}px`;
+      updateHeadline();
     });
 
-    // 5. Render Ekspor Gambar HD 1080x1080
-    btnDownload.addEventListener('click', () => {
-      const ctx = exportCanvas.getContext('2d');
-      const W = 1080;
-      const H = 1080;
+    lineHeightSelect.addEventListener('change', (e) => {
+      previewHeadline.style.lineHeight = e.target.value;
+    });
 
-      ctx.clearRect(0, 0, W, H);
+    textAlignSelect.addEventListener('change', (e) => {
+      previewHeadline.style.textAlign = e.target.value;
+    });
 
-      // Gambar Latar
-      const previewW = canvasWrapper.clientWidth;
-      const factor = W / previewW;
+    // --- 3. TAG & FOOTER SYNCS ---
+    tagInput.addEventListener('input', () => {
+      previewTag.textContent = tagInput.value || 'TAG';
+    });
 
-      ctx.save();
-      const exportX = imgState.x * factor;
-      const exportY = imgState.y * factor;
-      const exportScale = imgState.scale * factor;
+    // Credit / Sumber sync & toggle
+    creditInput.addEventListener('input', () => {
+      previewCreditText.textContent = creditInput.value || 'Sumber: Twitter/X';
+    });
 
-      ctx.translate(exportX, exportY);
-      ctx.drawImage(bgImage, 0, 0, imgState.baseWidth * exportScale, imgState.baseHeight * exportScale);
-      ctx.restore();
-
-      // Overlay Gradien Bawah
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0.35, "rgba(0, 0, 0, 0)");
-      grad.addColorStop(0.55, "rgba(41, 66, 133, 0.45)");
-      grad.addColorStop(0.72, "#3b58a2");
-      grad.addColorStop(1.0, "#354f94");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Baris Atas: TAG BADGE (Kiri)
-      const tagText = (inputTag.value || 'JKT48').toUpperCase();
-      ctx.font = '800 28px "Poppins", sans-serif';
-      const tagWidth = ctx.measureText(tagText).width + 50;
-      const tagHeight = 52;
-      const tagX = W * 0.05;
-      const tagY = H * 0.58;
-
-      ctx.fillStyle = "#ffffff";
-      roundRect(ctx, tagX, tagY, tagWidth, tagHeight, 10, true, false);
-
-      ctx.fillStyle = "#3b5998";
-      ctx.textBaseline = "middle";
-      ctx.fillText(tagText, tagX + 25, tagY + tagHeight / 2 + 1);
-
-      // Baris Atas: CREDIT BADGE (Kanan, jika ON)
+    toggleCredit.addEventListener('change', () => {
       if (toggleCredit.checked) {
-        const creditText = (inputCredit.value || 'Sumber: Twitter/X').toUpperCase();
-        ctx.font = '700 22px "Poppins", sans-serif';
-        const creditWidth = ctx.measureText(creditText).width + 50;
-        const creditHeight = 48;
-        const creditX = (W * 0.95) - creditWidth;
-        const creditY = tagY + 2;
-
-        ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-        roundRect(ctx, creditX, creditY, creditWidth, creditHeight, 10, true, false);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-        ctx.lineWidth = 2;
-        roundRect(ctx, creditX, creditY, creditWidth, creditHeight, 10, false, true);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(creditText, creditX + 25, creditY + creditHeight / 2 + 1);
+        previewCreditBadge.classList.remove('hidden');
+        creditInput.disabled = false;
+      } else {
+        previewCreditBadge.classList.add('hidden');
+        creditInput.disabled = true;
       }
-
-      // Kotak Caption Putih
-      const boxX = W * 0.05;
-      const boxY = H * 0.64;
-      const boxW = W * 0.90;
-      const boxH = H * 0.265;
-
-      ctx.fillStyle = "#ffffff";
-      roundRect(ctx, boxX, boxY, boxW, boxH, 10, true, false);
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "#111111";
-      roundRect(ctx, boxX, boxY, boxW, boxH, 10, false, true);
-
-      // Render Teks Caption dengan Auto-Fit Proporsional HD
-      const captionString = inputCaption.value.trim();
-      const currentFontSize = parseFloat(window.getComputedStyle(previewCaption).fontSize);
-      const scaledFontSize = Math.floor(currentFontSize * factor * 0.97);
-
-      ctx.fillStyle = "#4262b2";
-      ctx.font = `800 ${scaledFontSize}px "Poppins", sans-serif`;
-      ctx.textBaseline = "top";
-
-      wrapText(ctx, captionString, boxX + 36, boxY + 32, boxW - 72, scaledFontSize * 1.18);
-
-      // Footer OSHITIVE+ & Domain
-      ctx.fillStyle = "#ffffff";
-      ctx.font = '800 28px "Poppins", sans-serif';
-      ctx.fillText("OSHITIVE+", boxX, H * 0.935);
-
-      // Garis & Titik Footer Kiri
-      ctx.beginPath();
-      ctx.arc(boxX + 180, H * 0.948, 7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.moveTo(boxX + 195, H * 0.948);
-      ctx.lineTo(boxX + 310, H * 0.948);
-      ctx.stroke();
-
-      // Garis & Titik Footer Kanan
-      ctx.beginPath();
-      ctx.moveTo(W * 0.45, H * 0.948);
-      ctx.lineTo(W * 0.55, H * 0.948);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(W * 0.565, H * 0.948, 7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.font = '700 23px "Poppins", sans-serif';
-      ctx.fillText("Baca berita selengkapnya di oshitive.com", W * 0.585, H * 0.938);
-
-      // Download Trigger
-      const link = document.createElement('a');
-      link.download = `oshitive-news-${Date.now()}.png`;
-      link.href = exportCanvas.toDataURL('image/png', 1.0);
-      link.click();
     });
 
-    // Helper: Rounded Rectangle
-    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-      if (fill) ctx.fill();
-      if (stroke) ctx.stroke();
+    function applyPrimaryColor(color) {
+      previewHeadline.style.color = color;
+      previewTag.style.color = color;
+      solidBottomBg.style.backgroundColor = color;
+      primaryColorHex.value = color.toUpperCase();
+      primaryColorInput.value = color;
     }
 
-    // Helper: Multi-line text wrapper
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-      const words = text.split(' ');
-      let line = '';
-      let currentY = y;
-
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-          ctx.fillText(line.trim(), x, currentY);
-          line = words[n] + ' ';
-          currentY += lineHeight;
-        } else {
-          line = testLine;
-        }
+    primaryColorInput.addEventListener('input', (e) => applyPrimaryColor(e.target.value));
+    primaryColorHex.addEventListener('input', (e) => {
+      if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+        applyPrimaryColor(e.target.value);
       }
-      ctx.fillText(line.trim(), x, currentY);
-    }
+    });
 
-    // Jalankan kalkulasi saat halaman dimuat
-    window.addEventListener('load', () => {
-      initializeImage();
-      fitHeadlineText();
+    footerCtaInput.addEventListener('input', () => {
+      previewFooterCta.textContent = footerCtaInput.value;
+    });
+
+    // Reset Teks
+    resetSampleBtn.addEventListener('click', () => {
+      tagInput.value = "JKT48";
+      previewTag.textContent = "JKT48";
+      toggleCredit.checked = true;
+      previewCreditBadge.classList.remove('hidden');
+      creditInput.disabled = false;
+      creditInput.value = "Sumber: Twitter/X";
+      previewCreditText.textContent = creditInput.value;
+      headlineInput.value = "Tidak Hanya Anindya Kini Aralie JKT48 Juga Perlihatkan Pose Tiga Jari";
+      previewHeadline.textContent = headlineInput.value;
+      footerCtaInput.value = "Baca berita selengkapnya di oshitive.com";
+      previewFooterCta.textContent = footerCtaInput.value;
+      manualFontSizeInput.value = 24;
+      manualFontSizeVal.textContent = "24px";
+      lineHeightSelect.value = "1.14";
+      previewHeadline.style.lineHeight = "1.14";
+      applyPrimaryColor("#4262b2");
+      updateHeadline();
+      showToast('Teks di-reset ke default');
+    });
+
+    // --- 4. EXPORT ENGINE 1080x1080 HIGH RESOLUTION ---
+    downloadBtn.addEventListener('click', async () => {
+      const originalHtml = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Merender 1080p...</span>`;
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1080;
+        const ctx = canvas.getContext('2d');
+
+        // Pastikan font Poppins sudah siap dirender
+        await document.fonts.ready;
+
+        // 1. Gambar Background Foto sesuai Transformasi (Scale & Offset Drag)
+        const rect = captureArea.getBoundingClientRect();
+        const scaleFactor = 1080 / rect.width;
+
+        ctx.save();
+        ctx.fillStyle = '#192b52';
+        ctx.fillRect(0, 0, 1080, 1080);
+
+        if (bgPreviewImg.complete && bgPreviewImg.naturalWidth > 0) {
+          ctx.save();
+          const imgAspect = bgPreviewImg.naturalWidth / bgPreviewImg.naturalHeight;
+          let drawW = 1080;
+          let drawH = 1080 / imgAspect;
+          if (drawH < 1080) {
+            drawH = 1080;
+            drawW = 1080 * imgAspect;
+          }
+
+          ctx.translate(540 + imgState.x * scaleFactor, 540 + imgState.y * scaleFactor);
+          ctx.scale(imgState.scale, imgState.scale);
+          ctx.drawImage(bgPreviewImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        }
+
+        // 2. Gradient Overlay & Solid Base
+        const grad = ctx.createLinearGradient(0, 360, 0, 720);
+        grad.addColorStop(0, 'rgba(66, 98, 178, 0)');
+        grad.addColorStop(1, '#4262b2');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 360, 1080, 360);
+
+        // Solid Bottom
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.fillRect(0, 700, 1080, 380);
+
+        // 3. Hitung Ukuran Teks dan Tinggi Dinamis Kotak Putih secara Presisi
+        const computedFontPx = parseFloat(window.getComputedStyle(previewHeadline).fontSize);
+        const highResFontSize = Math.round(computedFontPx * scaleFactor);
+        const lineHeight = highResFontSize * parseFloat(lineHeightSelect.value);
+
+        ctx.font = `900 ${highResFontSize}px Poppins, sans-serif`;
+        const words = (headlineInput.value || '').split(' ');
+        const lines = [];
+        let currentLine = '';
+        const boxW = 940;
+        const maxTextWidth = boxW - 80;
+
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+          const testWidth = ctx.measureText(testLine).width;
+          if (testWidth > maxTextWidth && i > 0) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+
+        // Hitung tinggi kotak putih dinamis berdasarkan jumlah baris teks
+        const textBlockHeight = lines.length * lineHeight;
+        const boxPaddingVertical = 36 * scaleFactor;
+        const boxH = Math.max(textBlockHeight + boxPaddingVertical, 120);
+
+        // Posisi Y bawah kotak dipatok tetap di atas footer (footer area di Y: 1000)
+        const boxBottomY = 985;
+        const boxY = boxBottomY - boxH;
+        const boxX = 70;
+
+        // 4. Render Tag Badge (Kiri) & Credit Badge (Kanan) DINAMIS MENGIKUTI POSISI ATAS KOTAK
+        const tagText = (tagInput.value || 'JKT48').toUpperCase();
+        ctx.font = 'bold 26px Poppins, sans-serif';
+        const tagMetrics = ctx.measureText(tagText);
+        const tagWidth = tagMetrics.width + 42;
+        const tagHeight = 44;
+        const tagX = boxX;
+        const tagY = boxY - tagHeight - 12; // Menempel persis di atas kotak
+
+        // Badge Tag Kiri
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(tagX, tagY, tagWidth, tagHeight, 10);
+        ctx.fill();
+
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.fillText(tagText, tagX + 21, tagY + 31);
+
+        // Credit Badge Kanan (sejajar horizontal dengan Tag)
+        if (toggleCredit.checked) {
+          const creditStr = (creditInput.value || 'Sumber: Twitter/X').toUpperCase();
+          ctx.font = '700 20px Poppins, sans-serif';
+          const creditMetrics = ctx.measureText(creditStr);
+          const creditW = creditMetrics.width + 36;
+          const creditH = 42;
+          const creditX = (boxX + boxW) - creditW;
+          const creditY = tagY + 1;
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.beginPath();
+          ctx.roundRect(creditX, creditY, creditW, creditH, 8);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(creditStr, creditX + 18, creditY + 28);
+        }
+
+        // 5. Render Kotak Putih Dinamis (Watermark Pattern + Border)
+        ctx.fillStyle = '#f8fafd';
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+
+        // Watermark polygons di dalam kotak
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(boxX, boxY, boxW, boxH);
+        ctx.clip();
+        ctx.fillStyle = 'rgba(66, 98, 178, 0.1)';
+
+        const shards = [
+          [[70, boxBottomY], [200, boxY], [300, boxBottomY]],
+          [[270, boxBottomY], [420, boxY], [540, boxBottomY]],
+          [[500, boxBottomY], [680, boxY], [800, boxBottomY]],
+          [[760, boxBottomY], [920, boxY], [1010, boxBottomY]],
+          [[0, boxY + boxH * 0.5], [160, boxY], [240, boxBottomY]]
+        ];
+        shards.forEach(poly => {
+          ctx.beginPath();
+          ctx.moveTo(poly[0][0], poly[0][1]);
+          ctx.lineTo(poly[1][0], poly[1][1]);
+          ctx.lineTo(poly[2][0], poly[2][1]);
+          ctx.closePath();
+          ctx.fill();
+        });
+        ctx.restore();
+
+        // Border Kotak Caption
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // 6. Render Teks Headline di dalam Kotak Dinamis
+        ctx.fillStyle = primaryColorInput.value || '#4262b2';
+        ctx.font = `900 ${highResFontSize}px Poppins, sans-serif`;
+        ctx.textAlign = textAlignSelect.value === 'center' ? 'center' : 'left';
+
+        const startTextY = boxY + (boxH - textBlockHeight) / 2 + (highResFontSize * 0.86);
+        const textX = textAlignSelect.value === 'center' ? boxX + boxW / 2 : boxX + 40;
+
+        lines.forEach((line, index) => {
+          ctx.fillText(line, textX, startTextY + (index * lineHeight));
+        });
+
+        // 7. Render Footer
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 24px Poppins, sans-serif';
+        const brandText = 'OSHITIVE+';
+        ctx.fillText(brandText, boxX, 1025);
+        const brandW = ctx.measureText(brandText).width;
+
+        ctx.font = '700 21px Poppins, sans-serif';
+        const ctaText = footerCtaInput.value || 'Baca berita selengkapnya di oshitive.com';
+        const ctaW = ctx.measureText(ctaText).width;
+        const ctaX = (boxX + boxW) - ctaW;
+        ctx.fillText(ctaText, ctaX, 1025);
+
+        // Garis penghubung titik footer
+        const lineStartX = boxX + brandW + 24;
+        const lineEndX = ctaX - 24;
+        const lineY = 1017;
+
+        if (lineEndX > lineStartX + 30) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+
+          ctx.beginPath();
+          ctx.arc(lineStartX, lineY, 5, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(lineStartX + 6, lineY);
+          ctx.lineTo(lineEndX - 6, lineY);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(lineEndX, lineY, 5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Trigger Download
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
+        const downloadLink = document.createElement('a');
+        const cleanTag = tagInput.value.replace(/[^a-zA-Z0-9]/g, '_') || 'oshitive';
+        downloadLink.download = `oshitive_${cleanTag}_${Date.now()}.png`;
+        downloadLink.href = dataUrl;
+        downloadLink.click();
+
+        showToast("Gambar 1080p berhasil di-download!");
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal merender gambar.");
+      } finally {
+        downloadBtn.innerHTML = originalHtml;
+        downloadBtn.disabled = false;
+      }
+    });
+
+    // Inisialisasi awal saat font siap
+    document.fonts.ready.then(() => {
+      updateHeadline();
+      renderImageTransform();
     });
   </script>
 </body>
