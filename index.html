@@ -174,31 +174,99 @@
             <!-- Video playback scrub slider -->
             <input type="range" id="videoTimeline" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
-            <!-- FITUR POTONG / TRIM VIDEO (Start & End Time) -->
-            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-2.5 flex flex-col gap-2">
+            <!-- FITUR POTONG / TRIM VIDEO (GAYA TIMELINE VISUAL SEPERTI REFERENSI) -->
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex flex-col gap-2.5">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-300 flex items-center gap-1">
-                  <i class="ph-bold ph-scissors text-[#4262b2]"></i> Potong Video (Trim)
+                <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                  <i class="ph-bold ph-scissors text-[#4262b2]"></i> Timeline Potong Video
                 </span>
-                <button id="btnResetTrim" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">Reset Penuh</button>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 flex items-center gap-1">
+                    <i class="ph-bold ph-gauge"></i> Kecepatan: <span id="speedDisplayLabel">1.02x</span>
+                  </span>
+                  <button id="btnResetTrim" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">Reset Penuh</button>
+                </div>
               </div>
-              <div class="grid grid-cols-2 gap-2">
+
+              <!-- TIMELINE VISUAL CLIP STRIP CONTAINER -->
+              <div class="relative w-full select-none py-1">
+                <!-- Timeline Track Background -->
+                <div id="visualTimelineContainer" class="relative w-full h-24 bg-[#1e2025] rounded-lg border border-slate-700 overflow-hidden cursor-pointer shadow-inner">
+                  
+                  <!-- Filmstrip Thumbnails Row (Generated dynamically from video frames) -->
+                  <div id="filmstripFrames" class="absolute inset-0 flex w-full h-full opacity-70 pointer-events-none"></div>
+
+                  <!-- Inactive Overlay Kiri (Bagian Terpotong) -->
+                  <div id="dimOverlayLeft" class="absolute top-0 bottom-0 left-0 bg-black/75 z-10 pointer-events-none"></div>
+
+                  <!-- Inactive Overlay Kanan (Bagian Terpotong) -->
+                  <div id="dimOverlayRight" class="absolute top-0 bottom-0 right-0 bg-black/75 z-10 pointer-events-none"></div>
+
+                  <!-- Active Clip Range Bounding Box (Sesuai Desain Referensi) -->
+                  <div id="activeClipRange" class="absolute top-0 bottom-0 border-2 border-white rounded-md z-20 pointer-events-none flex flex-col justify-between" style="left: 0%; width: 100%;">
+                    
+                    <!-- Top Bar Hijau Gelap dengan Badge Kecepatan -->
+                    <div class="w-full h-5 bg-[#095353] flex items-center justify-center relative border-b border-teal-600/50">
+                      <div class="bg-[#0b6464] text-white text-[10px] font-bold px-2 py-0.2 rounded flex items-center gap-1 shadow-sm">
+                        <span id="clipSpeedBadge">1.02x</span>
+                        <i class="ph-fill ph-caret-right text-[8px]"></i>
+                      </div>
+                    </div>
+
+                    <!-- Bottom Wave / Audio Pattern Strip (Sesuai Gambar) -->
+                    <div class="w-full h-3 bg-[#095353] border-t border-teal-600/40 flex items-center px-1">
+                      <div class="w-full h-1.5 opacity-60 flex gap-[2px]">
+                        <div class="flex-1 bg-white/50 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/80 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/40 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/70 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/90 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/50 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/80 h-full rounded-sm"></div>
+                        <div class="flex-1 bg-white/60 h-full rounded-sm"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Handle Potong Kiri (Draggable) -->
+                  <div id="handleTrimLeft" class="absolute top-0 bottom-0 w-4 bg-white hover:bg-slate-200 z-30 cursor-ew-resize rounded-l-md flex items-center justify-center shadow-lg border border-slate-400 touch-none" style="left: 0%;">
+                    <div class="w-1 h-5 bg-[#095353] rounded-full"></div>
+                  </div>
+
+                  <!-- Handle Potong Kanan (Draggable) -->
+                  <div id="handleTrimRight" class="absolute top-0 bottom-0 w-4 bg-white hover:bg-slate-200 z-30 cursor-ew-resize rounded-r-md flex items-center justify-center shadow-lg border border-slate-400 touch-none -ml-4" style="left: 100%;">
+                    <div class="w-1 h-5 bg-[#095353] rounded-full"></div>
+                  </div>
+
+                  <!-- Playhead Jarum Kuning (Waktu Saat Ini) -->
+                  <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-[2px] bg-amber-400 z-40 pointer-events-none shadow-[0_0_8px_rgba(251,191,36,0.8)]" style="left: 0%;">
+                    <div class="w-2.5 h-2.5 bg-amber-400 rotate-45 -ml-[4px] -mt-1 rounded-xs"></div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Input Numeric Alternatif & Info Durasi -->
+              <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800">
                 <div>
-                  <label class="block text-[10px] text-slate-400 mb-0.5">Mulai (Detik):</label>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Mulai:</label>
                   <div class="flex gap-1">
                     <input type="number" id="trimStart" min="0" step="0.1" value="0" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
                     <button id="btnSetStartCurrent" title="Set dari waktu saat ini" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 rounded text-[10px] font-bold">Now</button>
                   </div>
                 </div>
                 <div>
-                  <label class="block text-[10px] text-slate-400 mb-0.5">Selesai (Detik):</label>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Selesai:</label>
                   <div class="flex gap-1">
                     <input type="number" id="trimEnd" min="0.5" step="0.1" value="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
                     <button id="btnSetEndCurrent" title="Set dari waktu saat ini" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 rounded text-[10px] font-bold">Now</button>
                   </div>
                 </div>
               </div>
-              <span id="trimDurationInfo" class="text-[10px] text-slate-400 font-medium">Durasi potongan: <span class="text-white font-bold">0.0s</span></span>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <span id="trimDurationInfo">Durasi: <span class="text-white font-bold">0.0s</span></span>
+                <span class="text-slate-500 italic">Geser tuas putih kiri / kanan untuk memotong</span>
+              </div>
             </div>
 
             <div class="flex items-center justify-between pt-1">
@@ -518,7 +586,7 @@
     const newsOverlayGroup = document.getElementById('newsOverlayGroup');
     const gradientOverlay = document.getElementById('gradientOverlay');
 
-    // Trim Video Elements
+    // Trim Video & Timeline Visual Elements
     const trimStartInput = document.getElementById('trimStart');
     const trimEndInput = document.getElementById('trimEnd');
     const btnSetStartCurrent = document.getElementById('btnSetStartCurrent');
@@ -526,39 +594,172 @@
     const btnResetTrim = document.getElementById('btnResetTrim');
     const trimDurationInfo = document.getElementById('trimDurationInfo');
 
-    function updateTrimInfo() {
-      const start = parseFloat(trimStartInput.value) || 0;
-      const end = parseFloat(trimEndInput.value) || (bgPreviewVideo.duration || 0);
+    const visualTimelineContainer = document.getElementById('visualTimelineContainer');
+    const filmstripFrames = document.getElementById('filmstripFrames');
+    const activeClipRange = document.getElementById('activeClipRange');
+    const dimOverlayLeft = document.getElementById('dimOverlayLeft');
+    const dimOverlayRight = document.getElementById('dimOverlayRight');
+    const handleTrimLeft = document.getElementById('handleTrimLeft');
+    const handleTrimRight = document.getElementById('handleTrimRight');
+    const timelinePlayhead = document.getElementById('timelinePlayhead');
+    const clipSpeedBadge = document.getElementById('clipSpeedBadge');
+    const speedDisplayLabel = document.getElementById('speedDisplayLabel');
+
+    let isDraggingTrimLeft = false;
+    let isDraggingTrimRight = false;
+    let currentVideoSpeed = 1.02; // Otomatis naik ke 1.02x saat upload
+
+    function updateVisualTimeline() {
+      const totalDur = bgPreviewVideo.duration || 10;
+      if (totalDur <= 0) return;
+
+      const start = Math.max(0, parseFloat(trimStartInput.value) || 0);
+      const end = Math.min(totalDur, parseFloat(trimEndInput.value) || totalDur);
+
+      const leftPct = (start / totalDur) * 100;
+      const rightPct = (end / totalDur) * 100;
+      const widthPct = Math.max(0, rightPct - leftPct);
+
+      activeClipRange.style.left = `${leftPct}%`;
+      activeClipRange.style.width = `${widthPct}%`;
+
+      handleTrimLeft.style.left = `${leftPct}%`;
+      handleTrimRight.style.left = `${rightPct}%`;
+
+      dimOverlayLeft.style.width = `${leftPct}%`;
+      dimOverlayRight.style.width = `${100 - rightPct}%`;
+
       const dur = Math.max(0, end - start);
-      trimDurationInfo.innerHTML = `Durasi rekaman potongan: <span class="text-blue-300 font-bold">${dur.toFixed(1)}s</span> (Detik ${start.toFixed(1)} - ${end.toFixed(1)})`;
+      trimDurationInfo.innerHTML = `Durasi potongan: <span class="text-blue-300 font-bold">${dur.toFixed(1)}s</span> (${start.toFixed(1)}s - ${end.toFixed(1)}s)`;
+    }
+
+    // Ekstrak thumbnail strip frame otomatis dari video
+    function generateFilmstripThumbnails() {
+      filmstripFrames.innerHTML = '';
+      const totalDur = bgPreviewVideo.duration;
+      if (!totalDur || isNaN(totalDur)) return;
+
+      const numThumbnails = 8;
+      const hiddenVideo = document.createElement('video');
+      hiddenVideo.src = bgPreviewVideo.src;
+      hiddenVideo.muted = true;
+      hiddenVideo.playsInline = true;
+      hiddenVideo.crossOrigin = 'anonymous';
+
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 120;
+      thumbCanvas.height = 80;
+      const tCtx = thumbCanvas.getContext('2d');
+
+      let currentStep = 0;
+
+      hiddenVideo.onloadedmetadata = () => {
+        captureNextFrame();
+      };
+
+      function captureNextFrame() {
+        if (currentStep >= numThumbnails) return;
+        const targetTime = (totalDur / numThumbnails) * (currentStep + 0.5);
+        hiddenVideo.currentTime = targetTime;
+      }
+
+      hiddenVideo.onseeked = () => {
+        tCtx.drawImage(hiddenVideo, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        const img = document.createElement('img');
+        img.src = thumbCanvas.toDataURL('image/jpeg', 0.6);
+        img.className = 'flex-1 h-full object-cover border-r border-slate-800/60 pointer-events-none select-none';
+        filmstripFrames.appendChild(img);
+        currentStep++;
+        captureNextFrame();
+      };
+    }
+
+    // Drag Handle Kiri (Start Trim)
+    handleTrimLeft.addEventListener('pointerdown', (e) => {
+      isDraggingTrimLeft = true;
+      handleTrimLeft.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    });
+
+    // Drag Handle Kanan (End Trim)
+    handleTrimRight.addEventListener('pointerdown', (e) => {
+      isDraggingTrimRight = true;
+      handleTrimRight.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDraggingTrimLeft && !isDraggingTrimRight) return;
+      const rect = visualTimelineContainer.getBoundingClientRect();
+      const pos = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+      const totalDur = bgPreviewVideo.duration || 10;
+      const calculatedTime = pos * totalDur;
+
+      if (isDraggingTrimLeft) {
+        const curEnd = parseFloat(trimEndInput.value) || totalDur;
+        const newStart = Math.min(Math.max(0, calculatedTime), curEnd - 0.5);
+        trimStartInput.value = newStart.toFixed(1);
+        bgPreviewVideo.currentTime = newStart;
+        updateVisualTimeline();
+      } else if (isDraggingTrimRight) {
+        const curStart = parseFloat(trimStartInput.value) || 0;
+        const newEnd = Math.max(Math.min(totalDur, calculatedTime), curStart + 0.5);
+        trimEndInput.value = newEnd.toFixed(1);
+        bgPreviewVideo.currentTime = newEnd;
+        updateVisualTimeline();
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (isDraggingTrimLeft) {
+        isDraggingTrimLeft = false;
+        try { handleTrimLeft.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+      if (isDraggingTrimRight) {
+        isDraggingTrimRight = false;
+        try { handleTrimRight.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+    });
+
+    // Klik langsung pada area timeline untuk seek
+    visualTimelineContainer.addEventListener('click', (e) => {
+      if (e.target === handleTrimLeft || e.target === handleTrimRight) return;
+      const rect = visualTimelineContainer.getBoundingClientRect();
+      const pos = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+      const totalDur = bgPreviewVideo.duration || 10;
+      bgPreviewVideo.currentTime = pos * totalDur;
+    });
+
+    function updateTrimInfo() {
+      updateVisualTimeline();
     }
 
     trimStartInput.addEventListener('input', () => {
       const start = parseFloat(trimStartInput.value) || 0;
       if (bgPreviewVideo.currentTime < start) bgPreviewVideo.currentTime = start;
-      updateTrimInfo();
+      updateVisualTimeline();
     });
 
-    trimEndInput.addEventListener('input', updateTrimInfo);
+    trimEndInput.addEventListener('input', updateVisualTimeline);
 
     btnSetStartCurrent.addEventListener('click', () => {
       const cur = bgPreviewVideo.currentTime || 0;
       trimStartInput.value = cur.toFixed(1);
-      updateTrimInfo();
+      updateVisualTimeline();
       showToast(`Titik awal video di-set ke detik ${cur.toFixed(1)}s`);
     });
 
     btnSetEndCurrent.addEventListener('click', () => {
       const cur = bgPreviewVideo.currentTime || (bgPreviewVideo.duration || 10);
       trimEndInput.value = cur.toFixed(1);
-      updateTrimInfo();
+      updateVisualTimeline();
       showToast(`Titik akhir video di-set ke detik ${cur.toFixed(1)}s`);
     });
 
     btnResetTrim.addEventListener('click', () => {
       trimStartInput.value = "0";
       trimEndInput.value = (bgPreviewVideo.duration || 10).toFixed(1);
-      updateTrimInfo();
+      updateVisualTimeline();
       showToast("Durasi potongan dikembalikan ke penuh");
     });
 
@@ -732,16 +933,25 @@
       bgPreviewVideo.src = src;
       bgPreviewVideo.load();
 
+      // OTOMATIS NAIKKAN KECEPATAN DARI 1.00x MENJADI 1.02x
+      currentVideoSpeed = 1.02;
+      bgPreviewVideo.playbackRate = currentVideoSpeed;
+      bgPreviewVideo.defaultPlaybackRate = currentVideoSpeed;
+      if (clipSpeedBadge) clipSpeedBadge.textContent = "1.02x";
+      if (speedDisplayLabel) speedDisplayLabel.textContent = "1.02x";
+
       uploadLabelText.textContent = name ? name.substring(0, 14) + '...' : 'Ganti Video';
       downloadBtnText.textContent = 'Download Video (MP4/WebM)';
 
       bgPreviewVideo.onloadedmetadata = () => {
+        bgPreviewVideo.playbackRate = 1.02;
         videoTimeline.max = bgPreviewVideo.duration || 10;
         videoTimeDisplay.textContent = `00:00 / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
         trimStartInput.value = "0";
         trimEndInput.value = (bgPreviewVideo.duration || 10).toFixed(1);
         trimEndInput.max = (bgPreviewVideo.duration || 10).toFixed(1);
-        updateTrimInfo();
+        updateVisualTimeline();
+        generateFilmstripThumbnails();
         bgPreviewVideo.play();
         playIcon.className = "ph-bold ph-pause";
         btnPlayPause.innerHTML = '<i class="ph-bold ph-pause" id="playIcon"></i> Pause';
@@ -751,18 +961,33 @@
       imgState.y = 0;
       imgState.scale = 1.0;
       renderImageTransform();
-      showToast('Video aktif! Caption otomatis memudar di detik ke-5.');
+      showToast('Video aktif! Kecepatan otomatis dinaikkan ke 1.02x.');
     }
 
     // Video playback & auto fade engine pada detik ke-5
     bgPreviewVideo.addEventListener('timeupdate', () => {
       const cur = bgPreviewVideo.currentTime;
+      const totalDur = bgPreviewVideo.duration || 10;
       videoTimeline.value = cur;
-      videoTimeDisplay.textContent = `${formatSeconds(cur)} / ${formatSeconds(bgPreviewVideo.duration || 0)}`;
+      videoTimeDisplay.textContent = `${formatSeconds(cur)} / ${formatSeconds(totalDur)}`;
+
+      // Update posisi Playhead kuning di Timeline Strip
+      if (timelinePlayhead && totalDur > 0) {
+        const pct = Math.min(Math.max((cur / totalDur) * 100, 0), 100);
+        timelinePlayhead.style.left = `${pct}%`;
+      }
+
+      // Loop otomatis di rentang trim saat preview diputar
+      const clipStart = parseFloat(trimStartInput.value) || 0;
+      const clipEnd = parseFloat(trimEndInput.value) || totalDur;
+      if (cur >= clipEnd && !bgPreviewVideo.paused) {
+        bgPreviewVideo.currentTime = clipStart;
+      }
 
       if (toggleAutoFade.checked && mediaType === 'video') {
-        // Hilangkan caption dan latar bawah secara mulus setelah detik ke-5 (5.0s), footer tetap tinggal
-        if (cur >= 5.0) {
+        // Hilangkan caption dan latar bawah secara mulus setelah 5 detik RELATIF terhadap awal potongan video
+        const elapsedSinceTrimStart = cur - clipStart;
+        if (elapsedSinceTrimStart >= 5.0) {
           if (!isVideoFaded) {
             fadingCaptionSection.style.opacity = '0';
             gradientOverlay.style.opacity = '0';
@@ -1420,6 +1645,9 @@
           const wasMuted = bgPreviewVideo.muted;
           bgPreviewVideo.muted = false;
 
+          // Set kecepatan playback 1.02x saat proses perekaman
+          bgPreviewVideo.playbackRate = 1.02;
+
           // Reset playback video ke awal (0 detik)
           bgPreviewVideo.pause();
           bgPreviewVideo.currentTime = 0;
@@ -1427,6 +1655,7 @@
 
           recorder.start();
           await bgPreviewVideo.play();
+          bgPreviewVideo.playbackRate = 1.02;
 
           // Pengaturan durasi trim potongan video
           const clipStart = Math.max(0, parseFloat(trimStartInput.value) || 0);
@@ -1452,11 +1681,12 @@
               progressSpan.textContent = `Merekam Video (${pct}%)...`;
             }
 
-            // Hitung opacity overlay: pudar halus setelah detik ke-5 dari video
+            // Hitung opacity overlay: pudar halus setelah detik ke-5 RELATIF terhadap awal potongan video (clipStart)
             let overlayOpacity = 1.0;
             if (toggleAutoFade.checked) {
-              if (curTime >= 5.0) {
-                overlayOpacity = Math.max(0, 1.0 - (curTime - 5.0) * 2.0); // fade out dalam 0.5s
+              const elapsedFromTrim = curTime - clipStart;
+              if (elapsedFromTrim >= 5.0) {
+                overlayOpacity = Math.max(0, 1.0 - (elapsedFromTrim - 5.0) * 2.0); // fade out dalam 0.5s setelah detik ke-5 klip
               }
             }
 
@@ -1469,6 +1699,7 @@
               if (animationFrameId) cancelAnimationFrame(animationFrameId);
               bgPreviewVideo.pause();
               bgPreviewVideo.muted = wasMuted; // Kembalikan status mute awal
+              bgPreviewVideo.playbackRate = 1.02;
               setTimeout(() => {
                 if (recorder.state === 'recording') {
                   recorder.stop();
