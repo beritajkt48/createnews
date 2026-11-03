@@ -63,6 +63,10 @@ small{color:#94a3b8;font-size:11px}
 #wm{display:flex;align-items:center;gap:1cqw;color:var(--g);font-weight:700;font-size:2.8cqw;white-space:nowrap}
 #wmIcon{width:3.4cqw;height:3.4cqw;display:block}
 #footTxt{color:#fff;font-weight:600;font-size:2.4cqw;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cap .g{position:absolute;z-index:5;pointer-events:none;transition:border-color .1s}
+#gV{top:0;bottom:0;left:50%;width:0;border-left:1px dashed rgba(255,255,255,.5)}
+#gH{left:0;right:0;top:50%;height:0;border-top:1px dashed rgba(255,255,255,.5)}
+#cap .g.hot{border-color:#F6D365;border-style:solid}
 #toast{position:fixed;bottom:20px;right:20px;background:var(--g);color:#000;font-weight:700;font-size:12px;padding:9px 14px;border-radius:10px;opacity:0;transform:translateY(20px);transition:.3s;pointer-events:none;z-index:70}
 #toast.on{opacity:1;transform:none}
 </style>
@@ -133,7 +137,7 @@ small{color:#94a3b8;font-size:11px}
   <div class="card">
     <h3>Caption &amp; Latar Caption</h3>
     <div class="row"><label class="t"><input type="checkbox" id="capOn" checked>Tampilkan caption + latar (off = watermark saja)</label></div>
-    <textarea id="hlIn" rows="3">Tulis Caption Disini Tulis Caption Disini Tulis Caption Disini Tulis Caption Disini</textarea>
+    <textarea id="hlIn" rows="3">Caption tulis disini Caption tulis disini Caption tulis disini</textarea>
     <div class="row" style="margin-top:8px"><small class="fix">Ukuran</small><input type="range" id="hlSize" min="3" max="9" step="0.1" value="5.4"></div>
     <div class="row">
       <select id="lh"><option value="1.05">Rapat (1.05)</option><option value="1.14" selected>Normal (1.14)</option><option value="1.25">Sedang (1.25)</option><option value="1.35">Renggang (1.35)</option></select>
@@ -144,7 +148,7 @@ small{color:#94a3b8;font-size:11px}
 
   <div class="card">
     <h3>Tag &amp; Sumber</h3>
-    <div class="row"><label class="t"><input type="checkbox" id="tagOn" checked>Tag</label><input type="text" id="tagIn" value="JKT48"></div>
+    <div class="row"><label class="t"><input type="checkbox" id="tagOn" checked>Tag</label><input type="text" id="tagIn" value="NEWS"></div>
     <div class="row"><label class="t"><input type="checkbox" id="crOn" checked>Sumber</label><input type="text" id="crIn" value="Sumber: Twitter/X"></div>
     <small>Tag &amp; sumber bisa digeser bebas (juga saat caption dimatikan).</small>
     <div class="row" style="margin-top:8px"><button class="btn2" id="resetPos">Reset Posisi Caption / Tag / Sumber</button></div>
@@ -152,8 +156,9 @@ small{color:#94a3b8;font-size:11px}
 
   <div class="card">
     <h3>Footer</h3>
-    <div class="row"><label class="t"><input type="checkbox" id="ftOn" checked>Teks kanan</label><input type="text" id="ftIn" value="Jangan lupa ikuti kami"></div>
+    <div class="row"><label class="t"><input type="checkbox" id="ftOn" checked>Teks kanan</label><input type="text" id="ftIn" value="Ikuti media sosial resmi YOWIS CUK!"></div>
     <div class="row"><label class="t"><input type="checkbox" id="gradOn" checked>Gradien gelap bawah</label></div>
+    <div class="row"><label class="t"><input type="checkbox" id="guideOn" checked>Garis bantu tengah</label><label class="t"><input type="checkbox" id="snapOn" checked>Snap ke tengah</label></div>
     <small>Watermark Instagram @yowis.cuk (#F6D365) bersifat paten &amp; selalu tampil.</small>
   </div>
 </div>
@@ -171,9 +176,10 @@ small{color:#94a3b8;font-size:11px}
       <div class="hd" data-h="br" style="right:-9px;bottom:-9px;cursor:nwse-resize"></div>
     </div></div>
     <div id="grad"></div>
+    <div id="gV" class="g"></div><div id="gH" class="g"></div>
     <div id="stack">
       <div id="metaRow">
-        <span id="tag" class="drag">JKT48</span>
+        <span id="tag" class="drag">NEWS</span>
         <span id="credit" class="drag">Sumber: Twitter/X</span>
       </div>
       <div id="capBox" class="drag"><h2 id="hl"></h2></div>
@@ -222,11 +228,24 @@ document.querySelectorAll('#modal .opts button').forEach(b=>b.onclick=()=>{setFo
 
 /* ---------- drag elemen overlay ---------- */
 const offs=new Map();
+const SNAP=8;
+function hot(x,y){$('gV').classList.toggle('hot',!!x);$('gH').classList.toggle('hot',!!y);}
+function snapEl(el,o){
+  let hx=false,hy=false;
+  if($('snapOn').checked){
+    const R=cap.getBoundingClientRect(),r=el.getBoundingClientRect();
+    const dx=(R.left+R.width/2)-(r.left+r.width/2),dy=(R.top+R.height/2)-(r.top+r.height/2);
+    if(Math.abs(dx)<=SNAP){o.x+=dx;hx=true;}
+    if(Math.abs(dy)<=SNAP){o.y+=dy;hy=true;}
+    if(hx||hy)el.style.transform=`translate(${o.x}px,${o.y}px)`;
+  }
+  hot(hx,hy);
+}
 function makeDrag(el){
   offs.set(el,{x:0,y:0});let on=false,sx,sy,ox,oy;
   el.addEventListener('pointerdown',e=>{on=true;const o=offs.get(el);sx=e.clientX;sy=e.clientY;ox=o.x;oy=o.y;el.setPointerCapture(e.pointerId);e.preventDefault();});
-  el.addEventListener('pointermove',e=>{if(!on)return;const o=offs.get(el);o.x=ox+e.clientX-sx;o.y=oy+e.clientY-sy;el.style.transform=`translate(${o.x}px,${o.y}px)`;});
-  ['pointerup','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>on=false));
+  el.addEventListener('pointermove',e=>{if(!on)return;const o=offs.get(el);o.x=ox+e.clientX-sx;o.y=oy+e.clientY-sy;el.style.transform=`translate(${o.x}px,${o.y}px)`;snapEl(el,o);});
+  ['pointerup','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>{on=false;hot(false,false);}));
 }
 function resetPos(){offs.forEach((o,el)=>{o.x=o.y=0;el.style.transform='';});}
 ['tag','credit','capBox'].forEach(id=>makeDrag($(id)));
@@ -247,8 +266,10 @@ function upd(){
   $('metaRow').classList.toggle('hid',!$('tagOn').checked&&!$('crOn').checked);
   $('footTxt').classList.toggle('hid',!$('ftOn').checked);
   $('grad').classList.toggle('hid',!$('gradOn').checked);
+  $('gV').classList.toggle('hid',!$('guideOn').checked);
+  $('gH').classList.toggle('hid',!$('guideOn').checked);
 }
-['hlIn','hlSize','lh','al','tagIn','crIn','ftIn','capOn','tagOn','crOn','ftOn','gradOn'].forEach(id=>{$(id).addEventListener('input',upd);$(id).addEventListener('change',upd);});
+['hlIn','hlSize','lh','al','tagIn','crIn','ftIn','capOn','tagOn','crOn','ftOn','gradOn','guideOn'].forEach(id=>{$(id).addEventListener('input',upd);$(id).addEventListener('change',upd);});
 upd();
 
 /* ---------- transform media ---------- */
@@ -258,8 +279,13 @@ function applyT(){
 }
 let bd=null;
 tbox.addEventListener('pointerdown',e=>{if(e.target.classList.contains('hd'))return;bd={sx:e.clientX-st.x,sy:e.clientY-st.y};tbox.setPointerCapture(e.pointerId);});
-tbox.addEventListener('pointermove',e=>{if(!bd)return;st.x=e.clientX-bd.sx;st.y=e.clientY-bd.sy;applyT();});
-['pointerup','pointercancel'].forEach(ev=>tbox.addEventListener(ev,()=>bd=null));
+tbox.addEventListener('pointermove',e=>{
+  if(!bd)return;st.x=e.clientX-bd.sx;st.y=e.clientY-bd.sy;
+  let hx=false,hy=false;
+  if($('snapOn').checked){if(Math.abs(st.x)<=SNAP){st.x=0;hx=true;}if(Math.abs(st.y)<=SNAP){st.y=0;hy=true;}}
+  hot(hx,hy);applyT();
+});
+['pointerup','pointercancel'].forEach(ev=>tbox.addEventListener(ev,()=>{bd=null;hot(false,false);}));
 let rs=null;
 document.querySelectorAll('.hd').forEach(h=>{
   h.addEventListener('pointerdown',e=>{e.stopPropagation();const r=tbox.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;rs={cx,cy,s:st.s,d:Math.hypot(e.clientX-cx,e.clientY-cy)};h.setPointerCapture(e.pointerId);});
