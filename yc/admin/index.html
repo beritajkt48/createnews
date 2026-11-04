@@ -34,6 +34,7 @@ input[type=range]{width:100%;accent-color:var(--g)}
 input[type=checkbox]{accent-color:var(--g);width:15px;height:15px}
 small{color:#94a3b8;font-size:11px}
 .hid{display:none!important}
+.sub{border-top:1px solid #1e293b;padding-top:8px;margin-top:4px}
 /* modal */
 #modal{position:fixed;inset:0;z-index:60;background:#000d;display:flex;align-items:center;justify-content:center;padding:16px}
 #modal .box{background:#020617;border:1px solid #1e293b;border-radius:20px;padding:24px;max-width:560px;width:100%;text-align:center}
@@ -47,6 +48,7 @@ small{color:#94a3b8;font-size:11px}
 #frameBadge{font-size:11px;font-weight:700;color:var(--g)}
 #cap{position:relative;width:min(100%,520px);aspect-ratio:1/1;overflow:hidden;background:#192b52;container-type:inline-size;touch-action:none;user-select:none;border-radius:6px;box-shadow:0 10px 40px #0008}
 #bgBox{position:absolute;inset:0;z-index:0;overflow:hidden}
+#pv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #tbox{position:absolute;left:50%;top:50%;width:100%;height:100%;transform:translate(-50%,-50%);cursor:move;touch-action:none}
 #tbox img,#tbox video{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block}
 #tbox .bd{position:absolute;inset:0;border:2px dashed #ffffff90;pointer-events:none}
@@ -96,7 +98,49 @@ small{color:#94a3b8;font-size:11px}
 <main>
 <div id="ctrl">
 
-  <div class="card">
+  <!-- ===== KOMPOSISI: FOTO + VIDEO + MUSIK ===== -->
+  <div class="card" id="compCard">
+    <h3>Mode Video: Foto + Video + Musik</h3>
+    <div class="row"><label class="t"><input type="checkbox" id="cMaster">Aktifkan mode komposisi (hasil berupa video, durasi ikut musik)</label></div>
+    <div id="compBody" class="hid">
+      <div class="row"><label class="t"><input type="checkbox" id="cPhoto" checked>Foto</label><input type="file" id="cPhotoFile" accept="image/*"></div>
+
+      <div class="row sub"><label class="t"><input type="checkbox" id="cVid" checked>Video</label><input type="file" id="cVidFile" accept="video/*"></div>
+      <div class="row">
+        <select id="cMode">
+          <option value="pip">Foto + video: video di kotak atas foto</option>
+          <option value="seq">Foto + video: berurutan (foto dulu, lalu video)</option>
+        </select>
+        <div class="fix" style="width:110px"><small>Detik foto (berurutan)</small><input type="number" id="cPhotoSec" min="0.5" step="0.5" value="3"></div>
+      </div>
+      <div class="row"><label class="t"><input type="checkbox" id="cVidSnd">Pakai suara asli video (dicampur dengan musik)</label></div>
+
+      <div class="row sub"><label class="t"><input type="checkbox" id="cMus" checked>Musik</label><input type="file" id="cMusFile" accept="audio/*"></div>
+      <audio id="aud" controls style="width:100%;margin-bottom:8px"></audio>
+      <div class="row">
+        <div><small>Potong musik: mulai (dtk)</small><input type="number" id="mStart" min="0" step="0.1" value="0"></div>
+        <button class="btn2 fix" id="mNowS">Now</button>
+        <div><small>Selesai (dtk)</small><input type="number" id="mEnd" min="0.5" step="0.1" value="0"></div>
+        <button class="btn2 fix" id="mNowE">Now</button>
+      </div>
+      <div class="row"><label class="t"><input type="checkbox" id="mFade" checked>Fade out musik (2 dtk)</label><button class="btn2 fix" id="mReset">Reset Potong</button></div>
+      <small>Tips: putar musik di atas, lalu tekan "Now" di titik yang diinginkan.</small>
+
+      <div class="row sub" style="margin-top:8px"><small class="fix">Durasi manual (jika tanpa musik &amp; video)</small><input type="number" id="cDur" min="1" step="1" value="10"></div>
+      <div class="row">
+        <label class="t"><input type="checkbox" id="cFadeIn" checked>Teks fade in</label>
+        <label class="t"><input type="checkbox" id="cFadeOut">Teks fade out di akhir</label>
+      </div>
+      <div class="row">
+        <button class="btn2" id="cPlay">Preview</button>
+        <button class="btn2" id="cReset">Reset posisi / zoom foto</button>
+      </div>
+      <small id="cInfo"></small><br>
+      <small>Video panjangnya otomatis mengikuti musik (yang sudah dipotong); video diulang jika lebih pendek. Foto/video/musik bebas di-on/off. Disarankan Chrome/Edge untuk export dengan suara.</small>
+    </div>
+  </div>
+
+  <div class="card" id="bgCard">
     <h3>Gambar / Video Latar</h3>
     <div class="row">
       <input type="file" id="file" accept="image/*,video/*">
@@ -166,7 +210,9 @@ small{color:#94a3b8;font-size:11px}
 <div id="prev">
   <div id="frameBadge">1080 x 1080</div>
   <div id="cap">
-    <div id="bgBox"><div id="tbox">
+    <div id="bgBox">
+      <canvas id="pv" class="hid"></canvas>
+      <div id="tbox">
       <img id="img" crossorigin="anonymous" alt="" draggable="false" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80">
       <video id="vid" class="hid" playsinline muted loop crossorigin="anonymous"></video>
       <div class="bd"></div>
@@ -222,7 +268,7 @@ function setFormat(k){
   document.querySelectorAll('#fmtSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===k));
   st.x=st.y=0;applyT();resetPos();updateDlLabel();
 }
-function updateDlLabel(){$('dl').textContent=mediaType==='video'?'Download Video':`Download PNG (${F[fmt].w}x${F[fmt].h})`;}
+function updateDlLabel(){$('dl').textContent=compOn()?'Download Video (Komposisi)':mediaType==='video'?'Download Video':`Download PNG (${F[fmt].w}x${F[fmt].h})`;}
 document.querySelectorAll('#fmtSeg button').forEach(b=>b.onclick=()=>setFormat(b.dataset.f));
 document.querySelectorAll('#modal .opts button').forEach(b=>b.onclick=()=>{setFormat(b.dataset.f);$('modal').style.display='none';});
 
@@ -338,6 +384,7 @@ function fadeOpacity(el){
   return o;
 }
 vid.addEventListener('timeupdate',()=>{
+  if(compOn())return;
   const cur=vid.currentTime,d=vid.duration||10;
   $('vSeek').value=cur;$('vTime').textContent=`${fmtT(cur)} / ${fmtT(d)}`;
   const s=parseFloat($('tStart').value)||0,e=parseFloat($('tEnd').value)||d;
@@ -345,19 +392,210 @@ vid.addEventListener('timeupdate',()=>{
   $('stack').style.opacity=mediaType==='video'?fadeOpacity(Math.max(0,cur-s)):1;
 });
 
+/* =====================================================
+   KOMPOSISI: FOTO + VIDEO + MUSIK (durasi ikut musik)
+   ===================================================== */
+const pv=$('pv'), aud=$('aud');
+const cimg=new Image();
+const cvid=document.createElement('video');
+cvid.playsInline=true;cvid.loop=true;cvid.muted=true;cvid.preload='auto';cvid.style.display='none';
+document.body.appendChild(cvid);
+let playing=false, pt0=0, pvOn=false;
+
+function compOn(){return $('cMaster').checked;}
+function photoOn(){return $('cPhoto').checked&&cimg.naturalWidth>0;}
+function vidOn(){return $('cVid').checked&&cvid.videoWidth>0;}
+function musOn(){return $('cMus').checked&&!!aud.getAttribute('src')&&isFinite(aud.duration)&&aud.duration>0;}
+function seqPhotoSec(){return(photoOn()&&vidOn()&&$('cMode').value==='seq')?(parseFloat($('cPhotoSec').value)||3):0;}
+function musRange(){
+  const s=Math.max(0,parseFloat($('mStart').value)||0);
+  let e=parseFloat($('mEnd').value);
+  if(!e||e>aud.duration)e=aud.duration;
+  return{s,e:Math.max(s+.5,e)};
+}
+function compDur(){
+  if(musOn()){const r=musRange();return Math.max(.5,r.e-r.s);}
+  if($('cVid').checked&&vidOn())return seqPhotoSec()+(cvid.duration||10);
+  return Math.max(1,parseFloat($('cDur').value)||10);
+}
+function cInfo(){
+  const d=compDur();
+  const src=musOn()?'mengikuti musik':(vidOn()&&$('cVid').checked)?'mengikuti video':'manual';
+  $('cInfo').textContent=`Durasi video: ${d.toFixed(1)} dtk (${src})`;
+}
+function compFade(el,d){
+  let o=1;
+  if($('cFadeIn').checked&&el<.6)o=el/.6;
+  if($('cFadeOut').checked&&el>d-.6)o=Math.min(o,Math.max(0,(d-el)/.6));
+  return Math.max(0,Math.min(1,o));
+}
+function drawCover(ctx,m,mw,mh,W,H,k,useSt){
+  const ma=mw/mh;let bw,bh;
+  if(ma>W/H){bh=H;bw=H*ma;}else{bw=W;bh=W/ma;}
+  ctx.save();
+  ctx.translate(W/2+(useSt?st.x*k:0),H/2+(useSt?st.y*k:0));
+  if(useSt)ctx.scale(st.s,st.s);
+  ctx.drawImage(m,-bw/2,-bh/2,bw,bh);
+  ctx.restore();
+}
+function drawComp(ctx,W,H,el,k){
+  ctx.fillStyle='#192b52';ctx.fillRect(0,0,W,H);
+  const pO=photoOn(),vO=$('cVid').checked&&vidOn();
+  let showP=pO,showV=vO,pip=false;
+  if(pO&&vO){
+    if($('cMode').value==='seq'){if(el<seqPhotoSec())showV=false;else showP=false;}
+    else pip=true;
+  }
+  if(showP)drawCover(ctx,cimg,cimg.naturalWidth,cimg.naturalHeight,W,H,k,true);
+  if(showV){
+    const mw=cvid.videoWidth,mh=cvid.videoHeight;
+    if(pip){
+      let bw=W*.78,bh=bw*mh/mw;
+      if(bh>H*.62){bh=H*.62;bw=bh*mw/mh;}
+      const x=(W-bw)/2,y=(H-bh)/2-H*.04,r=W*.02;
+      ctx.save();rr(ctx,x,y,bw,bh,r);ctx.clip();ctx.drawImage(cvid,x,y,bw,bh);ctx.restore();
+      ctx.save();ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=Math.max(2,W*.004);rr(ctx,x,y,bw,bh,r);ctx.stroke();ctx.restore();
+    }else drawCover(ctx,cvid,mw,mh,W,H,k,true);
+  }
+}
+/* jaga video: di mode berurutan, video baru jalan setelah foto selesai */
+function syncVid(el){
+  if(!$('cVid').checked||!cvid.getAttribute('src'))return;
+  const need=el>=seqPhotoSec();
+  if(need&&cvid.paused)cvid.play().catch(()=>{});
+  if(!need&&!cvid.paused)cvid.pause();
+}
+function startPrev(){
+  if(!compOn())return;
+  playing=true;pt0=performance.now();
+  cvid.pause();cvid.currentTime=0;cvid.muted=!$('cVidSnd').checked;syncVid(0);
+  if(musOn()){aud.muted=false;aud.currentTime=musRange().s;aud.play().catch(()=>{});}
+  $('cPlay').textContent='Stop';
+}
+function stopPrev(){
+  playing=false;aud.pause();cvid.pause();cvid.currentTime=0;
+  $('cPlay').textContent='Preview';
+}
+$('cPlay').onclick=()=>playing?stopPrev():startPrev();
+
+function pvLoop(){
+  if(!compOn()){pvOn=false;return;}
+  const R=cap.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=Math.max(2,Math.round(R.width*dpr)),H=Math.max(2,Math.round(R.height*dpr));
+  if(pv.width!==W||pv.height!==H){pv.width=W;pv.height=H;}
+  let el=0;const d=compDur();
+  if(playing){
+    el=(performance.now()-pt0)/1000;
+    if(el>=d){stopPrev();el=0;}else syncVid(el);
+  }
+  drawComp(pv.getContext('2d'),W,H,el,W/R.width);
+  $('stack').style.opacity=playing?compFade(el,d):1;
+  requestAnimationFrame(pvLoop);
+}
+function setComp(){
+  const on=compOn();
+  $('compBody').classList.toggle('hid',!on);
+  $('bgCard').classList.toggle('hid',on);
+  pv.classList.toggle('hid',!on);
+  if(on){
+    vid.pause();img.classList.add('hid');vid.classList.add('hid');
+    st.x=st.y=0;st.s=1;applyT();cInfo();
+    if(!pvOn){pvOn=true;requestAnimationFrame(pvLoop);}
+  }else{
+    stopPrev();
+    if(mediaType==='video'){vid.classList.remove('hid');$('vidPanel').classList.remove('hid');}
+    else img.classList.remove('hid');
+    $('stack').style.opacity=1;
+  }
+  updateDlLabel();
+}
+$('cMaster').onchange=setComp;
+$('cReset').onclick=()=>{st.x=st.y=0;st.s=1;applyT();};
+['cPhoto','cVid','cMus','cMode','cPhotoSec','cDur','mStart','mEnd'].forEach(id=>{$(id).addEventListener('input',cInfo);$(id).addEventListener('change',cInfo);});
+
+$('cPhotoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;cimg.onload=()=>{cInfo();toast('Foto dimuat');};cimg.src=URL.createObjectURL(f);$('cPhoto').checked=true;};
+$('cVidFile').onchange=e=>{const f=e.target.files[0];if(!f)return;stopPrev();cvid.onloadeddata=()=>{cvid.currentTime=0;cInfo();toast('Video dimuat');};cvid.src=URL.createObjectURL(f);cvid.load();$('cVid').checked=true;};
+$('cMusFile').onchange=e=>{const f=e.target.files[0];if(!f)return;stopPrev();aud.src=URL.createObjectURL(f);$('cMus').checked=true;};
+aud.addEventListener('loadedmetadata',()=>{$('mStart').value=0;$('mEnd').value=aud.duration.toFixed(1);cInfo();toast('Musik dimuat');});
+$('mNowS').onclick=()=>{$('mStart').value=aud.currentTime.toFixed(1);cInfo();};
+$('mNowE').onclick=()=>{$('mEnd').value=aud.currentTime.toFixed(1);cInfo();};
+$('mReset').onclick=()=>{$('mStart').value=0;$('mEnd').value=(aud.duration||0).toFixed(1);cInfo();};
+
+async function exportComp(f){
+  const btn=$('dl'),old=btn.textContent;
+  const pO=photoOn(),vO=$('cVid').checked&&vidOn(),mO=musOn();
+  if(!pO&&!vO&&!mO){toast('Upload & aktifkan minimal satu: foto / video / musik');return;}
+  stopPrev();btn.disabled=true;btn.textContent='Menyiapkan...';
+  const dur=compDur(),useVS=vO&&$('cVidSnd').checked,wasAudMuted=aud.muted;
+  let actx=null;
+  const cleanup=()=>{
+    aud.pause();cvid.pause();cvid.currentTime=0;cvid.muted=true;aud.muted=wasAudMuted;
+    if(actx)actx.close().catch(()=>{});
+    btn.disabled=false;btn.textContent=old;
+  };
+  try{
+    const c=document.createElement('canvas');c.width=f.vw;c.height=f.vh;const ctx=c.getContext('2d');
+    const vtracks=c.captureStream(30).getVideoTracks();
+    cvid.pause();cvid.currentTime=0;cvid.muted=!useVS;
+    if(mO){aud.muted=false;aud.currentTime=musRange().s;}
+    await new Promise(r=>setTimeout(r,300));
+    if(mO)await aud.play();
+    syncVid(0);
+    await new Promise(r=>setTimeout(r,150));
+    let atracks=[];
+    if(mO||useVS){
+      actx=new(window.AudioContext||window.webkitAudioContext)();await actx.resume();
+      const dest=actx.createMediaStreamDestination();
+      const hook=(el,fade)=>{
+        const cs=(el.captureStream||el.mozCaptureStream).call(el),at=cs.getAudioTracks();
+        if(!at.length)return;
+        const src=actx.createMediaStreamSource(new MediaStream(at)),g=actx.createGain();
+        src.connect(g);g.connect(dest);
+        if(fade&&$('mFade').checked&&dur>2){const n=actx.currentTime;g.gain.setValueAtTime(1,n+dur-2);g.gain.linearRampToValueAtTime(0,n+dur);}
+      };
+      try{if(mO)hook(aud,true);if(useVS)hook(cvid,false);}catch(_){}
+      atracks=dest.stream.getAudioTracks();
+    }
+    const mime=['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+    const rec=new MediaRecorder(new MediaStream([...vtracks,...atracks]),mime?{mimeType:mime,videoBitsPerSecond:8e6}:undefined);
+    const chunks=[];
+    rec.ondataavailable=ev=>{if(ev.data.size)chunks.push(ev.data);};
+    rec.onstop=()=>{
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:mime||'video/webm'}));
+      a.download=`news_komposisi_${fmt}_${Date.now()}.${mime.includes('mp4')?'mp4':'webm'}`;a.click();
+      cleanup();toast('Video berhasil di-download');
+    };
+    rec.start();
+    const t0=performance.now();
+    const loop=()=>{
+      const el=(performance.now()-t0)/1000;
+      btn.textContent=`Merekam ${Math.min(100,Math.round(el/dur*100))}%...`;
+      syncVid(el);
+      render(ctx,f.vw,f.vh,compFade(el,dur),el);
+      if(el<dur)requestAnimationFrame(loop);
+      else{aud.pause();cvid.pause();setTimeout(()=>{if(rec.state==='recording')rec.stop();},200);}
+    };
+    requestAnimationFrame(loop);
+  }catch(err){console.error(err);cleanup();toast('Gagal merekam video');}
+}
+
 /* ---------- render ke canvas ---------- */
 function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h);}
-function render(ctx,W,H,op){
+function render(ctx,W,H,op,el){
   const R=cap.getBoundingClientRect(),k=W/R.width;
   const rel=el=>{const r=el.getBoundingClientRect();return{x:(r.left-R.left)*k,y:(r.top-R.top)*k,w:r.width*k,h:r.height*k};};
   ctx.save();ctx.fillStyle='#192b52';ctx.fillRect(0,0,W,H);
 
-  const m=mediaType==='video'?vid:img;
-  const mw=mediaType==='video'?vid.videoWidth:img.naturalWidth,mh=mediaType==='video'?vid.videoHeight:img.naturalHeight;
-  if(mw>0&&mh>0){
-    const ma=mw/mh;let bw,bh;
-    if(ma>W/H){bh=H;bw=H*ma;}else{bw=W;bh=W/ma;}
-    ctx.save();ctx.translate(W/2+st.x*k,H/2+st.y*k);ctx.scale(st.s,st.s);ctx.drawImage(m,-bw/2,-bh/2,bw,bh);ctx.restore();
+  if(compOn()){
+    drawComp(ctx,W,H,el||0,k);
+  }else{
+    const m=mediaType==='video'?vid:img;
+    const mw=mediaType==='video'?vid.videoWidth:img.naturalWidth,mh=mediaType==='video'?vid.videoHeight:img.naturalHeight;
+    if(mw>0&&mh>0){
+      const ma=mw/mh;let bw,bh;
+      if(ma>W/H){bh=H;bw=H*ma;}else{bw=W;bh=W/ma;}
+      ctx.save();ctx.translate(W/2+st.x*k,H/2+st.y*k);ctx.scale(st.s,st.s);ctx.drawImage(m,-bw/2,-bh/2,bw,bh);ctx.restore();
+    }
   }
 
   if($('gradOn').checked){
@@ -425,6 +663,7 @@ function render(ctx,W,H,op){
 /* ---------- download ---------- */
 $('dl').onclick=async()=>{
   const f=F[fmt];await document.fonts.ready;
+  if(compOn())return exportComp(f);
   if(mediaType==='video')return exportVideo(f);
   try{
     const c=document.createElement('canvas');c.width=f.w;c.height=f.h;
@@ -460,7 +699,7 @@ async function exportVideo(f){
     const loop=()=>{
       const cur=vid.currentTime,el=Math.max(0,cur-s);
       btn.textContent=`Merekam ${Math.min(100,Math.round(el/Math.max(.5,e-s)*100))}%...`;
-      render(ctx,f.vw,f.vh,mediaType==='video'?fadeOpacity(el):1);
+      render(ctx,f.vw,f.vh,mediaType==='video'?fadeOpacity(el):1,el);
       if(!vid.ended&&cur<e-0.05)requestAnimationFrame(loop);
       else{vid.pause();setTimeout(()=>{if(rec.state==='recording')rec.stop();},200);}
     };
