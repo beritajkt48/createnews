@@ -20,6 +20,7 @@ button{font-family:inherit;cursor:pointer}
 .btn{border:0;background:var(--g);color:#000;font-weight:700;font-size:13px;padding:9px 16px;border-radius:10px}
 .btn:disabled{opacity:.6}
 .btn2{border:1px solid #334155;background:#1e293b;color:#cbd5e1;font-size:11px;font-weight:600;padding:5px 9px;border-radius:8px}
+.btn2:disabled{opacity:.4;cursor:default}
 main{max-width:1150px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr;gap:16px}
 @media(min-width:960px){main{grid-template-columns:5fr 6fr;align-items:start}#prev{order:2}#ctrl{order:1}}
 .card{background:#020617b3;border:1px solid #1e293b;border-radius:14px;padding:12px;margin-bottom:12px}
@@ -53,6 +54,9 @@ small{color:#94a3b8;font-size:11px}
 #tbox img,#tbox video{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block}
 #tbox .bd{position:absolute;inset:0;border:2px dashed #ffffff90;pointer-events:none}
 .hd{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #333;z-index:3}
+#cHit{position:absolute;inset:0;z-index:1;cursor:move;touch-action:none}
+#cSel{position:absolute;z-index:3;border:2px dashed #fff;pointer-events:none;box-shadow:0 0 0 1px #0006}
+.ch{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #333;pointer-events:auto;touch-action:none}
 #grad{position:absolute;left:0;right:0;bottom:0;height:45%;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.7),transparent)}
 #stack{position:absolute;left:5cqw;right:5cqw;bottom:11cqw;z-index:2;pointer-events:none}
 #stack .drag{pointer-events:auto;cursor:move;touch-action:none}
@@ -115,6 +119,15 @@ small{color:#94a3b8;font-size:11px}
       </div>
       <div class="row"><label class="t"><input type="checkbox" id="cVidSnd">Pakai suara asli video (dicampur dengan musik)</label></div>
 
+      <div class="row sub"><small class="fix">Objek aktif</small>
+        <div class="seg fix" id="actSeg"><button data-o="photo" class="on">Foto</button><button data-o="video">Video</button></div>
+        <small>atau klik objek di preview</small></div>
+      <div class="row"><small class="fix">Zoom</small><input type="range" id="cZoom" min="20" max="400" value="100"><small class="fix" id="cZoomVal">100%</small></div>
+      <div class="row"><small class="fix">Layer</small>
+        <button class="btn2" id="lFwd">Maju</button><button class="btn2" id="lBack">Mundur</button>
+        <button class="btn2" id="lFront">Ke paling depan</button><button class="btn2" id="lBottom">Ke paling belakang</button></div>
+      <small id="lInfo"></small>
+
       <div class="row sub"><label class="t"><input type="checkbox" id="cMus" checked>Musik</label><input type="file" id="cMusFile" accept="audio/*"></div>
       <audio id="aud" controls style="width:100%;margin-bottom:8px"></audio>
       <div class="row">
@@ -133,7 +146,7 @@ small{color:#94a3b8;font-size:11px}
       </div>
       <div class="row">
         <button class="btn2" id="cPlay">Preview</button>
-        <button class="btn2" id="cReset">Reset posisi / zoom foto</button>
+        <button class="btn2" id="cReset">Reset posisi / zoom objek aktif</button>
       </div>
       <small id="cInfo"></small><br>
       <small>Video panjangnya otomatis mengikuti musik (yang sudah dipotong); video diulang jika lebih pendek. Foto/video/musik bebas di-on/off. Disarankan Chrome/Edge untuk export dengan suara.</small>
@@ -222,6 +235,13 @@ small{color:#94a3b8;font-size:11px}
       <div class="hd" data-h="br" style="right:-9px;bottom:-9px;cursor:nwse-resize"></div>
     </div></div>
     <div id="grad"></div>
+    <div id="cHit" class="hid"></div>
+    <div id="cSel" class="hid">
+      <div class="ch" style="left:-9px;top:-9px;cursor:nwse-resize"></div>
+      <div class="ch" style="right:-9px;top:-9px;cursor:nesw-resize"></div>
+      <div class="ch" style="left:-9px;bottom:-9px;cursor:nesw-resize"></div>
+      <div class="ch" style="right:-9px;bottom:-9px;cursor:nwse-resize"></div>
+    </div>
     <div id="gV" class="g"></div><div id="gH" class="g"></div>
     <div id="stack">
       <div id="metaRow">
@@ -429,35 +449,126 @@ function compFade(el,d){
   if($('cFadeOut').checked&&el>d-.6)o=Math.min(o,Math.max(0,(d-el)/.6));
   return Math.max(0,Math.min(1,o));
 }
-function drawCover(ctx,m,mw,mh,W,H,k,useSt){
-  const ma=mw/mh;let bw,bh;
-  if(ma>W/H){bh=H;bw=H*ma;}else{bw=W;bh=W/ma;}
-  ctx.save();
-  ctx.translate(W/2+(useSt?st.x*k:0),H/2+(useSt?st.y*k:0));
-  if(useSt)ctx.scale(st.s,st.s);
-  ctx.drawImage(m,-bw/2,-bh/2,bw,bh);
-  ctx.restore();
-}
-function drawComp(ctx,W,H,el,k){
-  ctx.fillStyle='#192b52';ctx.fillRect(0,0,W,H);
+
+/* --- posisi, zoom & layer per objek (foto / video) --- */
+const T={photo:{s:1,x:0,y:0},video:{s:1,x:0,y:0}};
+let order=['photo','video'],active='photo'; // urutan bawah -> atas
+const clampS=v=>Math.min(4,Math.max(.2,v));
+
+function compState(el,edit){
   const pO=photoOn(),vO=$('cVid').checked&&vidOn();
   let showP=pO,showV=vO,pip=false;
   if(pO&&vO){
-    if($('cMode').value==='seq'){if(el<seqPhotoSec())showV=false;else showP=false;}
-    else pip=true;
+    if($('cMode').value==='seq'){
+      if(edit){showP=active==='photo';showV=!showP;}
+      else if(el<seqPhotoSec())showV=false;else showP=false;
+    }else pip=true;
   }
-  if(showP)drawCover(ctx,cimg,cimg.naturalWidth,cimg.naturalHeight,W,H,k,true);
-  if(showV){
-    const mw=cvid.videoWidth,mh=cvid.videoHeight;
-    if(pip){
-      let bw=W*.78,bh=bw*mh/mw;
-      if(bh>H*.62){bh=H*.62;bw=bh*mw/mh;}
-      const x=(W-bw)/2,y=(H-bh)/2-H*.04,r=W*.02;
-      ctx.save();rr(ctx,x,y,bw,bh,r);ctx.clip();ctx.drawImage(cvid,x,y,bw,bh);ctx.restore();
-      ctx.save();ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=Math.max(2,W*.004);rr(ctx,x,y,bw,bh,r);ctx.stroke();ctx.restore();
-    }else drawCover(ctx,cvid,mw,mh,W,H,k,true);
-  }
+  return{showP,showV,pip};
 }
+function itemRect(n,W,H,k,pip){
+  const t=T[n],mw=n==='photo'?cimg.naturalWidth:cvid.videoWidth,mh=n==='photo'?cimg.naturalHeight:cvid.videoHeight;
+  let bw,bh,cx=W/2,cy=H/2;
+  if(n==='video'&&pip){
+    bw=W*.78;bh=bw*mh/mw;if(bh>H*.62){bh=H*.62;bw=bh*mw/mh;}cy=H/2-H*.04;
+  }else{const ma=mw/mh;if(ma>W/H){bh=H;bw=H*ma;}else{bw=W;bh=W/ma;}}
+  const w=bw*t.s,h=bh*t.s;cx+=t.x*k;cy+=t.y*k;
+  return{x:cx-w/2,y:cy-h/2,w,h,cx,cy};
+}
+function drawComp(ctx,W,H,el,k,edit){
+  ctx.fillStyle='#192b52';ctx.fillRect(0,0,W,H);
+  const s=compState(el,edit);
+  order.forEach(n=>{
+    if(n==='photo'&&s.showP){const r=itemRect(n,W,H,k,false);ctx.drawImage(cimg,r.x,r.y,r.w,r.h);}
+    if(n==='video'&&s.showV){
+      const r=itemRect(n,W,H,k,s.pip);
+      if(s.pip){
+        const rd=W*.02;
+        ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rd);ctx.clip();ctx.drawImage(cvid,r.x,r.y,r.w,r.h);ctx.restore();
+        ctx.save();ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=Math.max(2,W*.004);rr(ctx,r.x,r.y,r.w,r.h,rd);ctx.stroke();ctx.restore();
+      }else ctx.drawImage(cvid,r.x,r.y,r.w,r.h);
+    }
+  });
+}
+
+/* --- UI kontrol objek aktif & layer --- */
+function syncUI(){
+  document.querySelectorAll('#actSeg button').forEach(b=>b.classList.toggle('on',b.dataset.o===active));
+  const z=Math.round(T[active].s*100);$('cZoom').value=z;$('cZoomVal').textContent=z+'%';
+  const i=order.indexOf(active),top=i===order.length-1,bot=i===0;
+  $('lFwd').disabled=$('lFront').disabled=top;$('lBack').disabled=$('lBottom').disabled=bot;
+  $('lInfo').textContent='Urutan atas → bawah: '+[...order].reverse().map(n=>n==='photo'?'Foto':'Video').join(' › ')+' (terlihat saat mode "video di kotak atas foto")';
+}
+function setActive(n){active=n;syncUI();}
+function resetAllT(){for(const n in T)T[n]={s:1,x:0,y:0};syncUI();}
+function moveLayer(op){
+  const i=order.indexOf(active);let j=i;
+  if(op==='fwd')j=Math.min(order.length-1,i+1);
+  if(op==='back')j=Math.max(0,i-1);
+  if(op==='front')j=order.length-1;
+  if(op==='bottom')j=0;
+  order.splice(i,1);order.splice(j,0,active);syncUI();
+}
+function updateSel(R){
+  const sel=$('cSel');
+  if(playing){sel.classList.add('hid');return;}
+  const s=compState(0,true);
+  if(!((active==='photo'&&s.showP)||(active==='video'&&s.showV))){sel.classList.add('hid');return;}
+  const r=itemRect(active,R.width,R.height,1,s.pip);
+  sel.classList.remove('hid');
+  Object.assign(sel.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'});
+}
+document.querySelectorAll('#actSeg button').forEach(b=>b.onclick=()=>setActive(b.dataset.o));
+$('lFwd').onclick=()=>moveLayer('fwd');$('lBack').onclick=()=>moveLayer('back');
+$('lFront').onclick=()=>moveLayer('front');$('lBottom').onclick=()=>moveLayer('bottom');
+$('cZoom').oninput=e=>{T[active].s=clampS(e.target.value/100);syncUI();};
+$('cReset').onclick=()=>{T[active]={s:1,x:0,y:0};syncUI();};
+cap.addEventListener('wheel',e=>{if(!compOn())return;T[active].s=clampS(T[active].s+(e.deltaY<0?.08:-.08));syncUI();},{passive:false});
+document.querySelectorAll('#fmtSeg button,#modal .opts button').forEach(b=>b.addEventListener('click',resetAllT));
+
+/* klik = pilih objek, drag = geser (snap ke tengah) */
+const hitEl=$('cHit');let cd=null;
+hitEl.addEventListener('pointerdown',e=>{
+  if(playing)return;
+  const R=cap.getBoundingClientRect(),px=e.clientX-R.left,py=e.clientY-R.top,s=compState(0,true);
+  const vis=n=>n==='photo'?s.showP:s.showV;
+  const inside=n=>{const r=itemRect(n,R.width,R.height,1,s.pip);return px>=r.x&&px<=r.x+r.w&&py>=r.y&&py<=r.y+r.h;};
+  const hit=[...order].reverse().find(n=>vis(n)&&inside(n));
+  if(hit)setActive(hit);else if(!vis(active)){const a=order.find(vis);if(a)setActive(a);}
+  if(!vis(active))return;
+  const t=T[active];cd={sx:e.clientX-t.x,sy:e.clientY-t.y};
+  hitEl.setPointerCapture(e.pointerId);e.preventDefault();
+});
+hitEl.addEventListener('pointermove',e=>{
+  if(!cd)return;
+  const t=T[active],R=cap.getBoundingClientRect();
+  t.x=e.clientX-cd.sx;t.y=e.clientY-cd.sy;
+  let hx=false,hy=false;
+  if($('snapOn').checked){
+    const r=itemRect(active,R.width,R.height,1,compState(0,true).pip);
+    const dx=R.width/2-r.cx,dy=R.height/2-r.cy;
+    if(Math.abs(dx)<=SNAP){t.x+=dx;hx=true;}
+    if(Math.abs(dy)<=SNAP){t.y+=dy;hy=true;}
+  }
+  hot(hx,hy);
+});
+['pointerup','pointercancel'].forEach(ev=>hitEl.addEventListener(ev,()=>{cd=null;hot(false,false);}));
+
+/* handle sudut = resize (zoom) */
+let rz=null;
+document.querySelectorAll('.ch').forEach(h=>{
+  h.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    const r=$('cSel').getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    rz={cx,cy,s:T[active].s,d:Math.hypot(e.clientX-cx,e.clientY-cy)};h.setPointerCapture(e.pointerId);
+  });
+  h.addEventListener('pointermove',e=>{
+    if(!rz||rz.d<5)return;
+    T[active].s=clampS(rz.s*Math.hypot(e.clientX-rz.cx,e.clientY-rz.cy)/rz.d);syncUI();
+  });
+  ['pointerup','pointercancel'].forEach(ev=>h.addEventListener(ev,()=>rz=null));
+});
+
 /* jaga video: di mode berurutan, video baru jalan setelah foto selesai */
 function syncVid(el){
   if(!$('cVid').checked||!cvid.getAttribute('src'))return;
@@ -488,7 +599,8 @@ function pvLoop(){
     el=(performance.now()-pt0)/1000;
     if(el>=d){stopPrev();el=0;}else syncVid(el);
   }
-  drawComp(pv.getContext('2d'),W,H,el,W/R.width);
+  drawComp(pv.getContext('2d'),W,H,el,W/R.width,!playing);
+  updateSel(R);
   $('stack').style.opacity=playing?compFade(el,d):1;
   requestAnimationFrame(pvLoop);
 }
@@ -497,12 +609,15 @@ function setComp(){
   $('compBody').classList.toggle('hid',!on);
   $('bgCard').classList.toggle('hid',on);
   pv.classList.toggle('hid',!on);
+  $('cHit').classList.toggle('hid',!on);
+  tbox.classList.toggle('hid',on);
   if(on){
     vid.pause();img.classList.add('hid');vid.classList.add('hid');
-    st.x=st.y=0;st.s=1;applyT();cInfo();
+    st.x=st.y=0;st.s=1;applyT();cInfo();syncUI();
     if(!pvOn){pvOn=true;requestAnimationFrame(pvLoop);}
   }else{
     stopPrev();
+    $('cSel').classList.add('hid');
     if(mediaType==='video'){vid.classList.remove('hid');$('vidPanel').classList.remove('hid');}
     else img.classList.remove('hid');
     $('stack').style.opacity=1;
@@ -510,7 +625,6 @@ function setComp(){
   updateDlLabel();
 }
 $('cMaster').onchange=setComp;
-$('cReset').onclick=()=>{st.x=st.y=0;st.s=1;applyT();};
 ['cPhoto','cVid','cMus','cMode','cPhotoSec','cDur','mStart','mEnd'].forEach(id=>{$(id).addEventListener('input',cInfo);$(id).addEventListener('change',cInfo);});
 
 $('cPhotoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;cimg.onload=()=>{cInfo();toast('Foto dimuat');};cimg.src=URL.createObjectURL(f);$('cPhoto').checked=true;};
@@ -587,7 +701,7 @@ function render(ctx,W,H,op,el){
   ctx.save();ctx.fillStyle='#192b52';ctx.fillRect(0,0,W,H);
 
   if(compOn()){
-    drawComp(ctx,W,H,el||0,k);
+    drawComp(ctx,W,H,el||0,k,false);
   }else{
     const m=mediaType==='video'?vid:img;
     const mw=mediaType==='video'?vid.videoWidth:img.naturalWidth,mh=mediaType==='video'?vid.videoHeight:img.naturalHeight;
@@ -708,6 +822,7 @@ async function exportVideo(f){
 }
 
 setFormat('instagram');
+syncUI();
 document.fonts.ready.then(()=>{upd();applyT();});
 </script>
 </body>
