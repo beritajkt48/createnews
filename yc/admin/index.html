@@ -117,7 +117,7 @@ small{color:#94a3b8;font-size:11px}
         </select>
         <div class="fix" style="width:110px"><small>Detik foto (berurutan)</small><input type="number" id="cPhotoSec" min="0.5" step="0.5" value="3"></div>
       </div>
-      <div class="row"><label class="t"><input type="checkbox" id="cVidSnd">Pakai suara asli video (dicampur dengan musik)</label></div>
+      <div class="row"><label class="t"><input type="checkbox" id="cVidSnd" checked>Pakai suara asli video (musik tambahan opsional, jika ada akan dicampur)</label></div>
 
       <div class="row sub"><small class="fix">Objek aktif</small>
         <div class="seg fix" id="actSeg"><button data-o="photo" class="on">Foto</button><button data-o="video">Video</button></div>
@@ -128,7 +128,7 @@ small{color:#94a3b8;font-size:11px}
         <button class="btn2" id="lFront">Ke paling depan</button><button class="btn2" id="lBottom">Ke paling belakang</button></div>
       <small id="lInfo"></small>
 
-      <div class="row sub"><label class="t"><input type="checkbox" id="cMus" checked>Musik</label><input type="file" id="cMusFile" accept="audio/*"></div>
+      <div class="row sub"><label class="t"><input type="checkbox" id="cMus">Musik tambahan (opsional)</label><input type="file" id="cMusFile" accept="audio/*"></div>
       <audio id="aud" controls style="width:100%;margin-bottom:8px"></audio>
       <div class="row">
         <div><small>Potong musik: mulai (dtk)</small><input type="number" id="mStart" min="0" step="0.1" value="0"></div>
@@ -628,7 +628,7 @@ $('cMaster').onchange=setComp;
 ['cPhoto','cVid','cMus','cMode','cPhotoSec','cDur','mStart','mEnd'].forEach(id=>{$(id).addEventListener('input',cInfo);$(id).addEventListener('change',cInfo);});
 
 $('cPhotoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;cimg.onload=()=>{cInfo();toast('Foto dimuat');};cimg.src=URL.createObjectURL(f);$('cPhoto').checked=true;};
-$('cVidFile').onchange=e=>{const f=e.target.files[0];if(!f)return;stopPrev();cvid.onloadeddata=()=>{cvid.currentTime=0;cInfo();toast('Video dimuat');};cvid.src=URL.createObjectURL(f);cvid.load();$('cVid').checked=true;};
+$('cVidFile').onchange=e=>{const f=e.target.files[0];if(!f)return;stopPrev();cvid.onloadeddata=()=>{cvid.currentTime=0;cInfo();toast('Video dimuat');};cvid.src=URL.createObjectURL(f);cvid.load();$('cVid').checked=true;$('cVidSnd').checked=true;};
 $('cMusFile').onchange=e=>{const f=e.target.files[0];if(!f)return;stopPrev();aud.src=URL.createObjectURL(f);$('cMus').checked=true;};
 aud.addEventListener('loadedmetadata',()=>{$('mStart').value=0;$('mEnd').value=aud.duration.toFixed(1);cInfo();toast('Musik dimuat');});
 $('mNowS').onclick=()=>{$('mStart').value=aud.currentTime.toFixed(1);cInfo();};
@@ -655,19 +655,22 @@ async function exportComp(f){
     await new Promise(r=>setTimeout(r,300));
     if(mO)await aud.play();
     syncVid(0);
-    await new Promise(r=>setTimeout(r,150));
+    await new Promise(r=>setTimeout(r,400));
     let atracks=[];
     if(mO||useVS){
       actx=new(window.AudioContext||window.webkitAudioContext)();await actx.resume();
       const dest=actx.createMediaStreamDestination();
       const hook=(el,fade)=>{
         const cs=(el.captureStream||el.mozCaptureStream).call(el),at=cs.getAudioTracks();
-        if(!at.length)return;
+        if(!at.length)return false;
         const src=actx.createMediaStreamSource(new MediaStream(at)),g=actx.createGain();
         src.connect(g);g.connect(dest);
         if(fade&&$('mFade').checked&&dur>2){const n=actx.currentTime;g.gain.setValueAtTime(1,n+dur-2);g.gain.linearRampToValueAtTime(0,n+dur);}
+        return true;
       };
-      try{if(mO)hook(aud,true);if(useVS)hook(cvid,false);}catch(_){}
+      try{if(mO)hook(aud,true);}catch(err){console.error(err);toast('Musik gagal direkam');}
+      try{if(useVS&&!hook(cvid,false))toast('Video ini tidak punya jalur suara / browser tidak bisa menangkapnya');}
+      catch(err){console.error(err);toast('Suara video gagal direkam, coba Chrome/Edge');}
       atracks=dest.stream.getAudioTracks();
     }
     const mime=['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m))||'';
